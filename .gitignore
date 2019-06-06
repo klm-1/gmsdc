@@ -1,0 +1,16 @@
+syntax: regexp
+.*\.win
+.*\.o
+.*\.exe
+.*\.zip
+.*\.depend
+.hg/*
+Build/*
+out/*
+bin/*
+obj/*
+syntax: glob
+log.txt
+Makefile
+.hgignore
+disasm1.layout

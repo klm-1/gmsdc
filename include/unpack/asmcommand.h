@@ -9,7 +9,7 @@
 
 class GmForm;
 
-enum class DataType 
+enum class DataType
 {
     Double,
     Float,
@@ -22,7 +22,7 @@ enum class DataType
     Int16 = 0x0f,
 };
 
-enum class Comparison 
+enum class Comparison
 {
     LT = 1,
     LE = 2,
@@ -32,10 +32,10 @@ enum class Comparison
     GT = 6
 };
 
-enum class Operation 
+enum class Operation
 {
     Nop     = 0x00,  // Fake NOP operation
-    Save = 0xF5,  // Non-documented operation
+    Save    = 0xF5,  // Non-documented operation
 
     Conv    = 0x07,
     Mul     = 0x08,
@@ -71,7 +71,7 @@ enum class Operation
     Break   = 0xFF,
 };
 
-enum class InstanceType 
+enum class InstanceType
 {
     Local            = -7,
     Unknown1         = -6,
@@ -84,7 +84,7 @@ enum class InstanceType
     /* ID > 0, */
 };
 
-enum class VariableType 
+enum class VariableType
 {
     Array     = 0x00,
     StackTop  = 0x80,
@@ -92,7 +92,7 @@ enum class VariableType
     RoomScope = 0xE0,
 };
 
-enum class SaveState 
+enum class SaveState
 {
     Addr      = 5,
     Index     = 6,
@@ -125,7 +125,7 @@ private:
 };
 
 
-struct AsmCommand 
+struct AsmCommand
 {
     static const uint32_t SaveStateHigh16;
 

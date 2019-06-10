@@ -1,16 +1,10 @@
-syntax: regexp
-.*\.win
-.*\.o
-.*\.exe
-.*\.zip
-.*\.depend
-.hg/*
-Build/*
-out/*
-bin/*
-obj/*
-syntax: glob
+.hg/
+Build/
+out/
+bin/
+obj/
 log.txt
 Makefile
 .hgignore
-disasm1.layout
+*.layout
+*.depend

@@ -37,7 +37,7 @@ void GmlWriter::print(const GmAST& ast)
 
 void GmlWriter::writePaddingLine()
 {
-    if (padAllowed_) 
+    if (padAllowed_)
 	{
         padAllowed_ = false;
         out() << "\n";
@@ -94,7 +94,7 @@ void GmlWriter::endLine(const char* str)
 void GmlWriter::collectLocalVariables(const GmAST& ast)
 {
     const GmAST* scope = nullptr;
-    switch (ast.pattern()) 
+    switch (ast.pattern())
 	{
         case (GmlPattern::Variable):
             scope = ast.leaf()->leavesCount() == 0 ? ast.leaf() : ast.leaf()->leaf();
@@ -109,12 +109,12 @@ void GmlWriter::collectLocalVariables(const GmAST& ast)
             break;
     }
 
-    if (scope && scope->dataInt() == static_cast<int>(InstanceType::Local)) 
+    if (scope && scope->dataInt() == static_cast<int>(InstanceType::Local))
 	{
         locals_.insert(ast.dataString());
     }
 
-    for (const auto& l : ast.links_) 
+    for (const auto& l : ast.links_)
 	{
         collectLocalVariables(*l);
     }
@@ -122,33 +122,33 @@ void GmlWriter::collectLocalVariables(const GmAST& ast)
 
 void GmlWriter::writeScope(const GmAST& ast)
 {
-    if (ast.leavesCount() == 0) 
+    if (ast.leavesCount() == 0)
 	{
         int64_t itype = ast.dataInt();
         InstanceType t = InstanceType(itype);
 
-        if (itype < 0) 
+        if (itype < 0)
 		{
             if (t != InstanceType::Local &&
-                (t != InstanceType::Self || locals_.find(ast.uplink_->dataString()) != locals_.end())) 
+                (t != InstanceType::Self || locals_.find(ast.uplink_->dataString()) != locals_.end()))
 			{
                 out() << InstanceType2PrettyString(t) << ".";
             }
-        } 
-		else if (const char* obj = queryForm(itype, ExprContext::Object)) 
+        }
+		else if (const char* obj = queryForm(itype, ExprContext::Object))
 		{
             out() << obj << ".";
-        } 
-		else 
+        }
+		else
 		{
             out() << "(" << itype << ").";
         }
-    } 
-	else if (ast.leaf()->pattern() == GmlPattern::Number) 
+    }
+	else if (ast.leaf()->pattern() == GmlPattern::Number)
 	{
         writeScope(*ast.leaf());
-    } 
-	else 
+    }
+	else
 	{
         bool par = ast.leaf()->pattern() == GmlPattern::BinaryOp ||
                    ast.leaf()->pattern() == GmlPattern::UnaryOp ||
@@ -163,7 +163,7 @@ void GmlWriter::writeScope(const GmAST& ast)
 
 const char* GmlWriter::queryForm(int n, ExprContext::Type ctx)
 {
-    switch (ctx) 
+    switch (ctx)
 	{
         case (ExprContext::Sprite):
             return queryChunk(form_.sprites, n);
@@ -207,33 +207,33 @@ void GmlWriter::writeExpression(const GmAST& ast, ExprContext::Type ctx)
 {
     int64_t n = ast.dataInt();
 
-    if (ast.pattern() != GmlPattern::Number || to_string(n) != ast.dataString()) 
+    if (ast.pattern() != GmlPattern::Number || to_string(n) != ast.dataString())
 	{
         writeExpression(ast);
         return;
     }
 
     const char* val = ExprContext::ValueInContext(n, ctx);
-    if (val) 
+    if (val)
 	{
         out() << val;
         return;
     }
 
-    if (ctx == ExprContext::Color) 
+    if (ctx == ExprContext::Color)
 	{
         writeHexadecimal(n, 6);
         return;
     }
 
     const char* name = queryForm(n, ctx);
-    if (name) 
+    if (name)
 	{
         out() << name;
         return;
     }
 
-    if (ctx == ExprContext::Object && n < 0 && n >= -7) 
+    if (ctx == ExprContext::Object && n < 0 && n >= -7)
 	{
         out() << InstanceType2PrettyString(InstanceType(n));
         return;
@@ -244,13 +244,13 @@ void GmlWriter::writeExpression(const GmAST& ast, ExprContext::Type ctx)
 
 void GmlWriter::writeExpression(const GmAST& ast)
 {
-    switch (ast.pattern()) 
+    switch (ast.pattern())
 	{
         case (GmlPattern::BinaryOp):
             writeBinaryOp(ast);
             break;
 
-        case (GmlPattern::UnaryOp): 
+        case (GmlPattern::UnaryOp):
 			{
                 bool par = ast.leaf()->pattern() == GmlPattern::BinaryOp;
                 out() << ast.dataString();
@@ -318,7 +318,7 @@ void GmlWriter::writeBinaryOp(const GmAST& ast)
 
     bool leftp = l->pattern() == GmlPattern::BinaryOp && lookup(BinaryOpPriority, op) >= lookup(BinaryOpPriority, lop);
     bool rightp = r->pattern() == GmlPattern::BinaryOp && lookup(BinaryOpPriority, op) > lookup(BinaryOpPriority, rop);
-    if (leftp && op == lop && (op == "||" || op == "&&")) 
+    if (leftp && op == lop && (op == "||" || op == "&&"))
 	{
         leftp = false;
     }
@@ -343,17 +343,17 @@ void GmlWriter::writeFunctionCall(const GmAST& ast)
     out() << (pad ? " " : "");
 
     int i = 0;
-    for (const auto& l : ast.links_) 
+    for (const auto& l : ast.links_)
 	{
-        if (l != *ast.links_.begin()) 
+        if (l != *ast.links_.begin())
 		{
             out() << ", ";
         }
-        if (ctx) 
+        if (ctx)
 		{
             writeExpression(*l, ctx->at(i));
-        } 
-		else 
+        }
+		else
 		{
             writeExpression(*l);
         }
@@ -366,12 +366,12 @@ void GmlWriter::writeFunctionCall(const GmAST& ast)
 
 void GmlWriter::writeCode(const GmAST& ast, bool ind)
 {
-    if (ind) 
+    if (ind)
 	{
         stepIn();
     }
 
-    switch (ast.pattern()) 
+    switch (ast.pattern())
 	{
         case (GmlPattern::If):
             beginLine("if (");
@@ -424,17 +424,17 @@ void GmlWriter::writeCode(const GmAST& ast, bool ind)
             break;
 
         case (GmlPattern::LinearBlock):
-            for (const auto& l : reversed(ast.links_)) 
+            for (const auto& l : reversed(ast.links_))
 			{
                 bool first = l == *ast.links_.rbegin();
                 bool last = l == *ast.links_.begin();
                 bool p = GmlNeedsPadding(l->pattern());
-                if (!first && p) 
+                if (!first && p)
 				{
                     writePaddingLine();
                 }
                 writeCode(*l, false);
-                if (!last && p) 
+                if (!last && p)
 				{
                     writePaddingLine();
                 }
@@ -474,7 +474,7 @@ void GmlWriter::writeCode(const GmAST& ast, bool ind)
             break;
 
         case (GmlPattern::DroppedExpr):
-            if (ast.leaf()->pattern() == GmlPattern::FunctionCall) 
+            if (ast.leaf()->pattern() == GmlPattern::FunctionCall)
 			{
                 writeCode(*ast.leaf(), false);
             }
@@ -487,13 +487,13 @@ void GmlWriter::writeCode(const GmAST& ast, bool ind)
             beginLine("switch (");
             writeExpression(*ast.rightLeaf());
             endLine(") {");
-            for (const auto& l : reversed(ast.links_)) 
+            for (const auto& l : reversed(ast.links_))
 			{
-                if (l == *ast.links_.rbegin()) 
+                if (l == *ast.links_.rbegin())
 				{
                     continue;
                 }
-                if (l != *++ast.links_.rbegin()) 
+                if (l != *++ast.links_.rbegin())
 				{
                     writePaddingLine();
                 }

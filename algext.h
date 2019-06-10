@@ -21,7 +21,7 @@ auto find(V&& v, T&& t)
 }
 
 template< class V, class Pred >
-const auto find_if(const V& v, Pred p)
+auto find_if(const V& v, Pred p)
 {
     return find_if(cbegin(v), cend(v), p);
 }

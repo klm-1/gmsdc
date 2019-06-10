@@ -42,7 +42,7 @@ struct GmChunk {
 
 
 template<class T>
-struct GmList 
+struct GmList
 {
     std::vector<T> content;
     int size, offset;
@@ -62,7 +62,7 @@ struct GmList
         uint32_t n = *np;
         content.reserve(n);
 
-        for (uint32_t i = 0; i < n; ++i) 
+        for (uint32_t i = 0; i < n; ++i)
 		{
             content.push_back(T(raw, np[i + 1]));
         }
@@ -81,7 +81,7 @@ struct GmList
 
 
 template<class T>
-struct GmListChunk : GmChunk 
+struct GmListChunk : GmChunk
 {
     GmList<T> content;
 
@@ -108,12 +108,12 @@ struct GmListChunk : GmChunk
 /* ************ *
  * List entries *
  * ************ */
-struct PathPoint 
+struct PathPoint
 {
     float x, y, speed;
 };
 
-struct SpriteEntry 
+struct SpriteEntry
 {
     uint32_t nameOffset;
     uint32_t width, height;
@@ -131,7 +131,7 @@ struct SpriteEntry
     SpriteEntry(const byte* raw, int off);
 };
 
-struct BackgroundEntry 
+struct BackgroundEntry
 {
     uint32_t nameOffset;
     uint32_t pad0[3];
@@ -143,7 +143,7 @@ struct BackgroundEntry
     BackgroundEntry(const byte* raw, int off);
 };
 
-struct PathEntry 
+struct PathEntry
 {
     uint32_t nameOffset;
     uint32_t isSmooth, isClosed;
@@ -156,7 +156,7 @@ struct PathEntry
     PathEntry(const byte* raw, int off);
 };
 
-struct ScriptDefEntry 
+struct ScriptDefEntry
 {
     uint32_t nameOffset;
     uint32_t codeID;
@@ -167,7 +167,7 @@ struct ScriptDefEntry
     ScriptDefEntry(const byte* raw, int off);
 };
 
-struct ScriptEntry 
+struct ScriptEntry
 {
     using v_code_t = std::vector<AsmCommand>;
 
@@ -184,13 +184,13 @@ struct ScriptEntry
     friend std::ostream& operator<< (std::ostream&, const ScriptEntry&);
 };
 
-struct GlobalvarEntry 
+struct GlobalvarEntry
 {
     GlobalvarEntry() = default;
     GlobalvarEntry(const byte* raw, int off);
 };
 
-struct ShaderEntry 
+struct ShaderEntry
 {
     uint32_t nameOffset;
 
@@ -200,7 +200,7 @@ struct ShaderEntry
     ShaderEntry(const byte* raw, int off);
 };
 
-struct ObjectEntry 
+struct ObjectEntry
 {
     uint32_t nameOffset;
 
@@ -210,7 +210,7 @@ struct ObjectEntry
     ObjectEntry(const byte* raw, int off);
 };
 
-struct RoomEntry 
+struct RoomEntry
 {
     uint32_t nameOffset;
 
@@ -220,13 +220,13 @@ struct RoomEntry
     RoomEntry(const byte* raw, int off);
 };
 
-struct TextureEntry 
+struct TextureEntry
 {
     TextureEntry() = default;
     TextureEntry(const byte* raw, int off);
 };
 
-struct StringEntry 
+struct StringEntry
 {
     std::string data;
 
@@ -234,7 +234,7 @@ struct StringEntry
     StringEntry(const byte* raw, int off);
 };
 
-struct ConstEntry 
+struct ConstEntry
 {
     uint32_t nameOffset;
     uint32_t valueOffset;
@@ -243,7 +243,7 @@ struct ConstEntry
     ConstEntry(const byte* raw, int off);
 };
 
-struct SoundEntry 
+struct SoundEntry
 {
     uint32_t nameOffset;
     uint32_t flags;
@@ -261,7 +261,7 @@ struct SoundEntry
     SoundEntry(const byte* raw, int off);
 };
 
-struct TimelineEntry 
+struct TimelineEntry
 {
     uint32_t nameOffset;
 
@@ -271,7 +271,7 @@ struct TimelineEntry
     TimelineEntry(const byte* raw, int off);
 };
 
-struct FunctionDefEntry 
+struct FunctionDefEntry
 {
     static const int static_size = 12;
 
@@ -285,7 +285,7 @@ struct FunctionDefEntry
     FunctionDefEntry(const byte* raw, int off);
 };
 
-struct FontEntry 
+struct FontEntry
 {
     uint32_t nameOffset;
 
@@ -295,7 +295,7 @@ struct FontEntry
     FontEntry(const byte* raw, int off);
 };
 
-struct VariableDefEntry 
+struct VariableDefEntry
 {
     static const int static_size = 20;
 
@@ -307,7 +307,7 @@ struct VariableDefEntry
     VariableDefEntry(const byte* raw, int off);
 };
 
-struct LocalVariableDefEntry 
+struct LocalVariableDefEntry
 {
     static const int static_size = 8;
 
@@ -318,7 +318,7 @@ struct LocalVariableDefEntry
     LocalVariableDefEntry(const byte* raw, int off);
 };
 
-struct LocalScriptDefEntry 
+struct LocalScriptDefEntry
 {
     int size;
     const char* name;
@@ -332,15 +332,15 @@ struct LocalScriptDefEntry
 /* ***************** *
  * Chunks definition *
  * ***************** */
-struct GmGen8Chunk : GmChunk 
+struct GmGen8Chunk : GmChunk
 {
     byte debug;
     byte bytecodeVersion;
     byte pad0[2];
     uint32_t filenameOffset;
     uint32_t configOffset;
-    uint32_t pad1; // Last object?
-    uint32_t pad2; // Last title?
+    uint32_t pad1;
+    uint32_t pad2;
     uint32_t gameID;
     uint32_t pad3[4];
     uint32_t nameOffset;
@@ -361,7 +361,7 @@ struct GmGen8Chunk : GmChunk
     GmGen8Chunk(const byte* raw, int off);
 };
 
-struct GmOptnChunk : GmChunk 
+struct GmOptnChunk : GmChunk
 {
     uint32_t pad0[2];
     uint32_t infoFlags;
@@ -372,112 +372,112 @@ struct GmOptnChunk : GmChunk
     GmOptnChunk(const byte* raw, int off);
 };
 
-struct GmLangChunk : GmChunk 
+struct GmLangChunk : GmChunk
 {
     /* TBD */
     GmLangChunk() = default;
     GmLangChunk(const byte* raw, int off);
 };
 
-struct GmExtnChunk : GmChunk 
+struct GmExtnChunk : GmChunk
 {
     /* TBD */
     GmExtnChunk() = default;
     GmExtnChunk(const byte* raw, int off);
 };
 
-struct GmSondChunk : GmListChunk<SoundEntry> 
+struct GmSondChunk : GmListChunk<SoundEntry>
 {
     GmSondChunk() = default;
     GmSondChunk(const byte* raw, int off);
 };
 
-struct GmAgrpChunk : GmChunk 
+struct GmAgrpChunk : GmChunk
 {
     /* TBD */
     GmAgrpChunk() = default;
     GmAgrpChunk(const byte* raw, int off);
 };
 
-struct GmSprtChunk : GmListChunk<SpriteEntry> 
+struct GmSprtChunk : GmListChunk<SpriteEntry>
 {
     GmSprtChunk() = default;
     GmSprtChunk(const byte* raw, int off);
 };
 
-struct GmBgndChunk : GmListChunk<BackgroundEntry> 
+struct GmBgndChunk : GmListChunk<BackgroundEntry>
 {
     GmBgndChunk() = default;
     GmBgndChunk(const byte* raw, int off);
 };
 
-struct GmPathChunk : GmListChunk<PathEntry> 
+struct GmPathChunk : GmListChunk<PathEntry>
 {
     GmPathChunk() = default;
     GmPathChunk(const byte* raw, int off);
 };
 
-struct GmScptChunk : GmListChunk<ScriptDefEntry> 
+struct GmScptChunk : GmListChunk<ScriptDefEntry>
 {
     GmScptChunk() = default;
     GmScptChunk(const byte* raw, int off);
 };
 
-struct GmGlobChunk : GmListChunk<GlobalvarEntry> 
+struct GmGlobChunk : GmListChunk<GlobalvarEntry>
 {
     GmGlobChunk() = default;
     GmGlobChunk(const byte* raw, int off);
 };
 
-struct GmShdrChunk : GmListChunk<ShaderEntry> 
+struct GmShdrChunk : GmListChunk<ShaderEntry>
 {
     GmShdrChunk() = default;
     GmShdrChunk(const byte* raw, int off);
 };
 
-struct GmFontChunk : GmListChunk<FontEntry> 
+struct GmFontChunk : GmListChunk<FontEntry>
 {
     /* TBD */
     GmFontChunk() = default;
     GmFontChunk(const byte* raw, int off);
 };
 
-struct GmTmlnChunk : GmListChunk<TimelineEntry> 
+struct GmTmlnChunk : GmListChunk<TimelineEntry>
 {
     /* TBD */
     GmTmlnChunk() = default;
     GmTmlnChunk(const byte* raw, int off);
 };
 
-struct GmObjtChunk : GmListChunk<ObjectEntry> 
+struct GmObjtChunk : GmListChunk<ObjectEntry>
 {
     /* TBD */
     GmObjtChunk() = default;
     GmObjtChunk(const byte* raw, int off);
 };
 
-struct GmRoomChunk : GmListChunk<RoomEntry> 
+struct GmRoomChunk : GmListChunk<RoomEntry>
 {
     /* TBD */
     GmRoomChunk() = default;
     GmRoomChunk(const byte* raw, int off);
 };
 
-struct GmDaflChunk : GmChunk 
+struct GmDaflChunk : GmChunk
 {
     /* TBD */
     GmDaflChunk() = default;
     GmDaflChunk(const byte* raw, int off);
 };
 
-struct GmTpagChunk : GmListChunk<TextureEntry> 
+struct GmTpagChunk : GmListChunk<TextureEntry>
 {
     /* TBD */
     GmTpagChunk() = default;
     GmTpagChunk(const byte* raw, int off);
 };
 
-struct GmCodeChunk : GmListChunk<ScriptEntry> 
+struct GmCodeChunk : GmListChunk<ScriptEntry>
 {
     AsmCommand* at(int off);
     void postInit(GmForm& f);
@@ -486,7 +486,7 @@ struct GmCodeChunk : GmListChunk<ScriptEntry>
     GmCodeChunk(const byte* raw, int off);
 };
 
-struct GmVariChunk : GmChunk 
+struct GmVariChunk : GmChunk
 {
     std::vector<VariableDefEntry> refVar;
     std::map<int, int> addressToIndex;
@@ -498,7 +498,7 @@ struct GmVariChunk : GmChunk
     GmVariChunk(const byte* raw, int off);
 };
 
-struct GmFuncChunk : GmChunk 
+struct GmFuncChunk : GmChunk
 {
     std::vector<FunctionDefEntry> refFunc;
     std::vector<LocalScriptDefEntry> refScript;
@@ -511,7 +511,7 @@ struct GmFuncChunk : GmChunk
     GmFuncChunk(const byte* raw, int off);
 };
 
-struct GmStrgChunk : GmListChunk<StringEntry> 
+struct GmStrgChunk : GmListChunk<StringEntry>
 {
     GmStrgChunk() = default;
     GmStrgChunk(const byte* raw, int off);
@@ -519,14 +519,14 @@ struct GmStrgChunk : GmListChunk<StringEntry>
     std::string get(int index) const;
 };
 
-struct GmTxtrChunk : GmChunk 
+struct GmTxtrChunk : GmChunk
 {
     /* TBD */
     GmTxtrChunk() = default;
     GmTxtrChunk(const byte* raw, int off);
 };
 
-struct GmAudoChunk : GmChunk 
+struct GmAudoChunk : GmChunk
 {
     /* TBD */
     GmAudoChunk() = default;

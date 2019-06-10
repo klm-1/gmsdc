@@ -41,19 +41,19 @@ bool BaseBlock::hasJumpAlways() const
     return code_.back().operation() == Operation::Jmp;
 }
 
-bool BaseBlock::hasJumpif () const
+bool BaseBlock::hasJumpIf() const
 {
     return hasJumpIfTrue() || hasJumpIfFalse();
 }
 
 bool BaseBlock::hasJump() const
 {
-    return hasJumpAlways() || hasJumpif ();
+    return hasJumpAlways() || hasJumpIf();
 }
 
 int BaseBlock::jumpTargetAddr() const
 {
-    if (!hasJump()) 
+    if (!hasJump())
 	{
         throw std::runtime_error("Trying to get jump target of BB that has no jump");
     }

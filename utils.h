@@ -48,9 +48,9 @@ std::string to_string(const T& t)
 template<class T>
 void replace_insert(std::vector<T>& v, const T& val, const std::vector<T>& r)
 {
-    for (size_t i = v.size() - 1; i--;) 
+    for (size_t i = v.size() - 1; i--;)
 	{
-        if (v[i] == val) 
+        if (v[i] == val)
 		{
             size_t vsize = v.size();
             v.resize(vsize + r.size() - 1);
@@ -73,7 +73,7 @@ void vector_deduplicate(std::vector<T>& v)
     std::set<T> uni;
     for (size_t i = 0; i < v.size();)
 	{
-        if (!uni.insert(v[i]).second) { v.erase(v.begin() + i); } 
+        if (!uni.insert(v[i]).second) { v.erase(v.begin() + i); }
 		else { ++i; }
     }
 }
@@ -81,7 +81,7 @@ void vector_deduplicate(std::vector<T>& v)
 template< class T >
 T pop_back(std::vector<T>& v)
 {
-    if (v.empty()) 
+    if (v.empty())
 	{
         throw std::runtime_error("Stack underflow");
     }
@@ -94,7 +94,7 @@ template<class K, class V>
 V lookup(const std::map<K, V>& m, const K& k)
 {
     auto it = m.find(k);
-    if (it == m.end()) 
+    if (it == m.end())
 	{
         throw std::runtime_error("Key not found");
     }
@@ -108,15 +108,15 @@ void string_lower(S& s)
 }
 
 template<class V>
-class reversed_ 
+class reversed_
 {
 public:
     reversed_(V& v): v_(v) {}
 
     auto begin()         { return std::rbegin(v_); }
 	auto end()           { return std::rend(v_); }
-	const auto cbegin()  { return std::crbegin(v_); }
-	const auto cend()    { return std::crend(v_); }
+	auto cbegin()  { return std::crbegin(v_); }
+	auto cend()    { return std::crend(v_); }
 
 private:
     V& v_;

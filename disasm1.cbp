@@ -11,13 +11,14 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="-v" />
+				<Option parameters="-f ark22.win" />
 				<Compiler>
 					<Add option="-Wfatal-errors" />
 					<Add option="-g" />
 					<Add option="-D__WINNT=1" />
 					<Add option="-DUNICODE" />
 					<Add directory="include" />
+					<Add directory="include/unpack/gmform" />
 				</Compiler>
 				<ExtraCommands>
 					<Add before="D:\Program Files (x86)\CodeBlocks\cbp2make.exe -in .\disasm1.cbp -out Makefile -targets Unix -unix" />
@@ -32,6 +33,7 @@
 				<Compiler>
 					<Add option="-O2" />
 					<Add directory="include" />
+					<Add directory="include/unpack/gmform" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -46,16 +48,15 @@
 				<Compiler>
 					<Add option="-g" />
 					<Add directory="include" />
+					<Add directory="include/unpack/gmform" />
 				</Compiler>
 			</Target>
 		</Build>
 		<Compiler>
-			<Add option="-pedantic" />
 			<Add option="-Wextra" />
 			<Add option="-Wall" />
 			<Add option="-std=c++14" />
 			<Add option="-fexceptions" />
-			<Add option="-std=gnu++14" />
 			<Add directory="." />
 			<Add directory="include/writer" />
 			<Add directory="include/unpack" />
@@ -69,9 +70,11 @@
 		<Unit filename="include/fsmanager.h" />
 		<Unit filename="include/gmast.h" />
 		<Unit filename="include/unpack/asmcommand.h" />
-		<Unit filename="include/unpack/gmchunk.h" />
-		<Unit filename="include/unpack/gmform.h" />
-		<Unit filename="include/unpack/gmheader.h" />
+		<Unit filename="include/unpack/binaryreader.h" />
+		<Unit filename="include/unpack/gmform/16/gmform16.h" />
+		<Unit filename="include/unpack/gmform/gmchunk.h" />
+		<Unit filename="include/unpack/gmform/gmform.h" />
+		<Unit filename="include/unpack/gmform/gmheader.h" />
 		<Unit filename="include/unpack/gmlexprcontext.h" />
 		<Unit filename="include/writer/gmlwriter.h" />
 		<Unit filename="include/writer/graphmlwriter.h" />
@@ -85,11 +88,13 @@
 		<Unit filename="src/fsmanager.cpp" />
 		<Unit filename="src/gmast.cpp" />
 		<Unit filename="src/unpack/asmcommand.cpp" />
-		<Unit filename="src/unpack/gmchunk.cpp" />
+		<Unit filename="src/unpack/binaryreader.cpp" />
 		<Unit filename="src/unpack/gmconstcontext.cpp" />
-		<Unit filename="src/unpack/gmform.cpp" />
+		<Unit filename="src/unpack/gmform/16/gmform16.cpp" />
+		<Unit filename="src/unpack/gmform/gmchunk.cpp" />
+		<Unit filename="src/unpack/gmform/gmform.cpp" />
+		<Unit filename="src/unpack/gmform/gmheader.cpp" />
 		<Unit filename="src/unpack/gmfunccontext.cpp" />
-		<Unit filename="src/unpack/gmheader.cpp" />
 		<Unit filename="src/unpack/gmlexprcontext.cpp" />
 		<Unit filename="src/writer/gmlwriter.cpp" />
 		<Unit filename="src/writer/graphmlwriter.cpp" />

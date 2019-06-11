@@ -9,9 +9,10 @@
 #include "decompiler.h"
 #include "fsmanager.h"
 #include "algext.h"
+#include "binaryreader.h"
 
 
-struct Options 
+struct Options
 {
     std::string dataWin = "data.win";
     std::string outputDir = "out";
@@ -39,13 +40,13 @@ std::vector<std::string> strsplit(const char* str)
     std::vector<std::string> ret;
     ret.emplace_back();
 
-    for (const char* pc = str; *pc; ++pc) 
+    for (const char* pc = str; *pc; ++pc)
 	{
-        if (*pc == ',') 
+        if (*pc == ',')
 		{
             ret.emplace_back();
-        } 
-		else if (*pc != ' ') 
+        }
+		else if (*pc != ' ')
 		{
             ret.back().push_back(*pc);
         }
@@ -58,11 +59,11 @@ Options parse_commandline(int argc, char** argv)
 {
     Options ret;
 
-    for (int i = 1; i < argc;) 
+    for (int i = 1; i < argc;)
 	{
-        if (!strcmp(argv[i], "-f")) 
+        if (!strcmp(argv[i], "-f"))
 		{
-            if (i == argc - 1) 
+            if (i == argc - 1)
 			{
                 printUsage();
                 break;
@@ -70,10 +71,10 @@ Options parse_commandline(int argc, char** argv)
             ret.dataWin = argv[i + 1];
             i += 2;
 
-        } 
-		else if (!strcmp(argv[i], "-o")) 
+        }
+		else if (!strcmp(argv[i], "-o"))
 		{
-            if (i == argc - 1) 
+            if (i == argc - 1)
 			{
                 printUsage();
                 break;
@@ -81,16 +82,16 @@ Options parse_commandline(int argc, char** argv)
             ret.outputDir = argv[i + 1];
             i += 2;
 
-        } 
-		else if (!strcmp(argv[i], "-v")) 
+        }
+		else if (!strcmp(argv[i], "-v"))
 		{
             ret.verboseLog = true;
             ++i;
 
-        } 
-		else if (!strcmp(argv[i], "-t")) 
+        }
+		else if (!strcmp(argv[i], "-t"))
 		{
-            if (i == argc - 1) 
+            if (i == argc - 1)
 			{
                 printUsage();
                 break;
@@ -98,10 +99,10 @@ Options parse_commandline(int argc, char** argv)
             ret.targets = strsplit(argv[i + 1]);
             i += 2;
 
-        } 
-		else if (!strcmp(argv[i], "-e")) 
+        }
+		else if (!strcmp(argv[i], "-e"))
 		{
-            if (i == argc - 1) 
+            if (i == argc - 1)
 			{
                 printUsage();
                 break;
@@ -109,8 +110,8 @@ Options parse_commandline(int argc, char** argv)
             ret.ignore = strsplit(argv[i + 1]);
             i += 2;
 
-        } 
-		else 
+        }
+		else
 		{
             printUsage();
             break;
@@ -128,8 +129,9 @@ int main(int argc, char** argv)
     std::ifstream dump(opt.dataWin, std::ios::binary);
     FsManager::directoryDelete(std::wstring(opt.outputDir.begin(), opt.outputDir.end()));
 
-    GmForm f;
-    dump >> f;
+    std::clog << "Loading " << opt.dataWin << "...\n";
+    BinaryReader br(dump);
+    auto f = GmForm::Read(br);
 
     Decompiler::Options dcOptn = Decompiler::Options::Debug();
     dcOptn.outputDir = opt.outputDir;
@@ -138,7 +140,7 @@ int main(int argc, char** argv)
     std::copy(opt.targets, std::inserter(dcOptn.targets, dcOptn.targets.end()));
     std::copy(opt.ignore, std::inserter(dcOptn.ignore, dcOptn.ignore.end()));
 
-    Decompiler dc(f);
+    Decompiler dc(*f);
     dc.decompile(dcOptn);
 
     return 0;

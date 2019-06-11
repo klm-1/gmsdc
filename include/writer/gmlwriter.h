@@ -44,7 +44,7 @@ private:
     const char* queryChunk(const Chunk& ch, int index)
     {
         if (index < 0 || index >= ch.size) { return nullptr; }
-        return ch[index].name;
+        return ch[index].name.c_str();
     }
 };
 

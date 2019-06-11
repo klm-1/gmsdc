@@ -52,8 +52,8 @@ void GmlWriter::writeLocalVariables(const GmAST& ast)
     if (locals_.empty())  { return; }
 
     beginLine("var ");
-    copy(++locals_.begin(), locals_.end(), ostream_iterator<string>(out(), ", "));
-    out() << *locals_.begin();
+    copy(locals_.begin(), --locals_.end(), ostream_iterator<string>(out(), ", "));
+    out() << *--locals_.end();
     endLine(";");
 }
 
@@ -166,34 +166,34 @@ const char* GmlWriter::queryForm(int n, ExprContext::Type ctx)
     switch (ctx)
 	{
         case (ExprContext::Sprite):
-            return queryChunk(form_.sprites, n);
+            return queryChunk(form_.sprites(), n);
 
         case (ExprContext::Sound):
-            return queryChunk(form_.sounds, n);
+            return queryChunk(form_.sounds(), n);
 
         case (ExprContext::Background):
-            return queryChunk(form_.backgrounds, n);
+            return queryChunk(form_.backgrounds(), n);
 
         case (ExprContext::Path):
-            return queryChunk(form_.paths, n);
+            return queryChunk(form_.paths(), n);
 
         case (ExprContext::Script):
-            return queryChunk(form_.scripts, n);
+            return queryChunk(form_.scripts(), n);
 
         case (ExprContext::Shader):
-            return queryChunk(form_.shaders, n);
+            return queryChunk(form_.shaders(), n);
 
         case (ExprContext::Font):
-            return queryChunk(form_.fonts, n);
+            return queryChunk(form_.fonts(), n);
 
         case (ExprContext::Timeline):
-            return queryChunk(form_.timelines, n);
+            return queryChunk(form_.timelines(), n);
 
         case (ExprContext::Object):
-            return queryChunk(form_.objects, n);
+            return queryChunk(form_.objects(), n);
 
         case (ExprContext::Room):
-            return queryChunk(form_.rooms, n);
+            return queryChunk(form_.rooms(), n);
 
         // case (ExprContext::File):
         // case (ExprContext::Extension):
@@ -337,10 +337,8 @@ void GmlWriter::writeBinaryOp(const GmAST& ast)
 void GmlWriter::writeFunctionCall(const GmAST& ast)
 {
     const auto* ctx = ExprContext::FuncArgContext(ast.dataString());
-    bool pad = ast.leavesCount() > 0;
 
     out() << ast.dataString().c_str() << "(";
-    out() << (pad ? " " : "");
 
     int i = 0;
     for (const auto& l : ast.links_)
@@ -360,7 +358,6 @@ void GmlWriter::writeFunctionCall(const GmAST& ast)
         ++i;
     }
 
-    out() << (pad ? " " : "");
     out() << ")";
 }
 

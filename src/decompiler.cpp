@@ -96,11 +96,11 @@ void Decompiler::decompile(const Options& opt)
     FsManager::directoryCreate(std::wstring(gmlsub.begin(), gmlsub.end()));
     FsManager::directoryCreate(std::wstring(logsub.begin(), logsub.end()));
 
-    for (ScriptEntry& src : form_->code) 
+    for (ScriptEntry const& src : form_->code())
 	{
         auto tgt_it = opt.targets.find(src.name);
         auto ign_it = opt.ignore.find(src.name);
-        if ((!opt.decompileAll && tgt_it == opt.targets.end()) || ign_it != opt.ignore.end()) 
+        if ((!opt.decompileAll && tgt_it == opt.targets.end()) || ign_it != opt.ignore.end())
 		{
             std::cout << "Skipped: " << src.name << std::endl;
             continue;
@@ -109,37 +109,44 @@ void Decompiler::decompile(const Options& opt)
         std::string fname = opt.outputDir + "/" + opt.gmlSubDir + "/" + src.name + ".gml";
 
         std::ofstream out(fname);
-        if (!out.good()) 
+        if (!out.good())
 		{
             std::cerr << "Failed to open " << fname << std::endl;
             continue;
         }
 
         std::cout << "Processing: " << src.name << std::endl;
-        GmAST::ptr_t ptree = decompileScript(src, opt);
-        AstTransformer::transform(ptree);
-        GmlWriter(out, *form_).print(*ptree);
+        try
+        {
+            GmAST::ptr_t ptree = decompileScript(src, opt);
+            AstTransformer::transform(ptree);
+            GmlWriter(out, *form_).print(*ptree);
+        }
+        catch (std::runtime_error& e)
+        {
+            std::cout << "  ERROR: " << e.what() << std::endl;
+        }
     }
 }
 
-GmAST::ptr_t Decompiler::decompileScript(ScriptEntry& src, const Options& opt)
+GmAST::ptr_t Decompiler::decompileScript(ScriptEntry const& src, const Options& opt)
 {
     std::string logPrefix = opt.outputDir + "/" + opt.logSubDir + "/" + src.name;
-    if (opt.eachScriptInSeparateDir && (opt.logAssembly || opt.logFlowgraph || opt.logTree)) 
+    if (opt.eachScriptInSeparateDir && (opt.logAssembly || opt.logFlowgraph || opt.logTree))
 	{
         FsManager::directoryCreate(std::wstring(logPrefix.begin(), logPrefix.end()));
         logPrefix += "/";
         logPrefix += src.name;
     }
 
-    if (opt.logAssembly) 
+    if (opt.logAssembly)
 	{
         std::ofstream(logPrefix + "_dump.gmasm") << src << std::endl;
     }
 
     FlowGraph g(src.code);
 
-    if (opt.logFlowgraph) 
+    if (opt.logFlowgraph)
 	{
         std::ofstream tmp(logPrefix + "_raw.gml");
         GraphmlWriter(tmp).print(g);
@@ -150,7 +157,7 @@ GmAST::ptr_t Decompiler::decompileScript(ScriptEntry& src, const Options& opt)
     fgOpt.logSteps = opt.logFlowgraph;
     g.analyze(fgOpt);
 
-    if (opt.logFlowgraph) 
+    if (opt.logFlowgraph)
 	{
         std::ofstream tmp(logPrefix + "_format.gml");
         GraphmlWriter(tmp).print(g);
@@ -158,7 +165,7 @@ GmAST::ptr_t Decompiler::decompileScript(ScriptEntry& src, const Options& opt)
 
     ControlTree* ct = g.controlTree();
 
-    if (opt.logTree) 
+    if (opt.logTree)
 	{
         std::ofstream tout(logPrefix + "_ctree.gml");
         GraphmlWriter(tout).print(*ct);
@@ -166,7 +173,7 @@ GmAST::ptr_t Decompiler::decompileScript(ScriptEntry& src, const Options& opt)
 
     GmAST::ptr_t ret = analyzeControlTree(ct);
 
-    if (opt.logTree) 
+    if (opt.logTree)
 	{
         std::ofstream tout(logPrefix + "_ast.gml");
         GraphmlWriter(tout).print(*ret);
@@ -185,12 +192,12 @@ GmAST::ptr_t Decompiler::analyzeControlTree(ControlTree* ct)
 
 void Decompiler::visit(ControlTree* ct, bool as_block, bool push_into)
 {
-    if (as_block) 
+    if (as_block)
 	{
         pushFrame(push_into ? pop_back(frame().expr_stack) : nullptr);
     }
 
-    switch (ct->type()) 
+    switch (ct->type())
 	{
         case (ControlTree::Type::Terminal):
             decompileBaseBlock(ct->baseblock());
@@ -246,7 +253,7 @@ void Decompiler::visit(ControlTree* ct, bool as_block, bool push_into)
             applyTree(GmlPattern::DoUntil, 1, 1);
             break;
 
-        case (ControlTree::Type::RepeatLoop): 
+        case (ControlTree::Type::RepeatLoop):
 			{
                 visit(ct->leftLeaf());
                 GmAST::ptr_t lim = pop_back(frame().expr_stack);
@@ -258,12 +265,12 @@ void Decompiler::visit(ControlTree* ct, bool as_block, bool push_into)
             }
             break;
 
-        case (ControlTree::Type::Switch): 
+        case (ControlTree::Type::Switch):
 			{
                 visit(ct->leftLeaf());
                 int no_default = 0;
                 GmAST::ptr_t var = (frame().expr_stack.back())->deepcopy();
-                for (int i = 1; i < ct->leavesCount() - 1; ++i) 
+                for (int i = 1; i < ct->leavesCount() - 1; ++i)
 				{
                     visit(ct->leaf(i));
                     no_default |= ct->leaf(i)->type() == ControlTree::Type::SwitchDefaultEmpty;
@@ -275,20 +282,20 @@ void Decompiler::visit(ControlTree* ct, bool as_block, bool push_into)
             break;
 
         case (ControlTree::Type::SwitchCaseBreak):
-        case (ControlTree::Type::SwitchCaseFallthrough): 
+        case (ControlTree::Type::SwitchCaseFallthrough):
 			{
                 visit(ct->leftLeaf());
                 GmAST::ptr_t cst = frame().expr_stack.back()->leftLeaf()->deepcopy();
                 frame().expr_stack.pop_back();
-                if (ct->leavesCount() > 1) 
+                if (ct->leavesCount() > 1)
 				{
                     visit(ct->rightLeaf(), true);
-                } 
-				else 
+                }
+				else
 				{
                     applyTree(GmlPattern::LinearBlock);
                 }
-                if (ct->type() == ControlTree::Type::SwitchCaseBreak) 
+                if (ct->type() == ControlTree::Type::SwitchCaseBreak)
 				{
                     applyTree(GmlPattern::Break);
                     applyTree(GmlPattern::LinearBlock, 2);
@@ -311,7 +318,7 @@ void Decompiler::visit(ControlTree* ct, bool as_block, bool push_into)
             break;
     }
 
-    if (as_block) 
+    if (as_block)
 	{
         popFrame();
     }
@@ -319,7 +326,7 @@ void Decompiler::visit(ControlTree* ct, bool as_block, bool push_into)
 
 void Decompiler::decompileBaseBlock(const BaseBlock& bb)
 {
-    for (const AsmCommand& cmd : bb) 
+    for (const AsmCommand& cmd : bb)
 	{
         applyCommand(cmd);
     }
@@ -327,7 +334,7 @@ void Decompiler::decompileBaseBlock(const BaseBlock& bb)
 
 void Decompiler::applyCommand(const AsmCommand& cmd)
 {
-    switch (cmd.operation()) 
+    switch (cmd.operation())
 	{
         case (Operation::Add):
         case (Operation::Sub):
@@ -361,9 +368,9 @@ void Decompiler::applyCommand(const AsmCommand& cmd)
             break;
 
         case (Operation::Pop):
-            if (!ret_expr_) 
+            if (!ret_expr_)
 			{
-                if (!frame().expr_stack.empty()) 
+                if (!frame().expr_stack.empty())
 				{
                     GmAST::ptr_t t = GmAST::make(GmlPattern::DroppedExpr);
                     t->addLeaf(pop_back(frame().expr_stack));
@@ -401,9 +408,9 @@ void Decompiler::applyCommand(const AsmCommand& cmd)
             break;
 
         case (Operation::PopEnv):
-            if (!ret_expr_) 
+            if (!ret_expr_)
 			{
-                if (!frame().env_stack.empty()) 
+                if (!frame().env_stack.empty())
 				{
                     applyTree(GmlPattern::LinearBlock, frame().stat_list.size() - frame().env_stack.back());
                     frame().env_stack.pop_back();
@@ -442,7 +449,7 @@ void Decompiler::applyBinaryOp(Operation op)
 void Decompiler::applyUnaryOp(const AsmCommand& cmd)
 {
     std::string op = lookup(AsmOpToUnary, cmd.operation());
-    if (cmd.operation() == Operation::Not && cmd.dataType() == DataType::Bool) 
+    if (cmd.operation() == Operation::Not && cmd.dataType() == DataType::Bool)
 	{
         op = "!";
     }
@@ -465,11 +472,11 @@ void Decompiler::applyTree(GmlPattern pat, int statc, int exprc)
     assert(static_cast<int>(frame().stat_list.size()) >= statc);
 
     GmAST::ptr_t t = GmAST::make(pat);
-    for (int i = 0; i < statc; ++i) 
+    for (int i = 0; i < statc; ++i)
 	{
         t->addLeaf(pop_back(frame().stat_list));
     }
-    for (int i = 0; i < exprc; ++i) 
+    for (int i = 0; i < exprc; ++i)
 	{
         t->addLeaf(pop_back(frame().expr_stack));
     }
@@ -478,8 +485,8 @@ void Decompiler::applyTree(GmlPattern pat, int statc, int exprc)
 
 void Decompiler::applyCall(const AsmCommand& cmd)
 {
-    GmAST::ptr_t t = GmAST::make(GmlPattern::FunctionCall, form_->nameByAddr(cmd.addr));
-    for (int i = 0; i < cmd.dataInt16(); ++i) 
+    GmAST::ptr_t t = GmAST::make(GmlPattern::FunctionCall, cmd.symbol);
+    for (int i = 0; i < cmd.dataInt16(); ++i)
 	{
         t->addLeaf(pop_back(frame().expr_stack));
     }
@@ -488,7 +495,7 @@ void Decompiler::applyCall(const AsmCommand& cmd)
 
 void Decompiler::applyPush(const AsmCommand& cmd)
 {
-    switch (cmd.dataType()) 
+    switch (cmd.dataType())
 	{
         case (DataType::Int16):
             frame().expr_stack.push_back(GmAST::make(GmlPattern::Number, static_cast<int64_t>(cmd.dataInt16())));
@@ -511,7 +518,7 @@ void Decompiler::applyPush(const AsmCommand& cmd)
             break;
 
         case (DataType::String):
-            frame().expr_stack.push_back(GmAST::make(GmlPattern::String, form_->strings[cmd.dataInt32()].data));
+            frame().expr_stack.push_back(GmAST::make(GmlPattern::String, form_->strings().get(cmd.dataInt32()).data()));
             break;
 
         case (DataType::Variable):
@@ -531,9 +538,9 @@ void Decompiler::applySaveAddr(const AsmCommand& cmd)
     assert(frame().expr_stack.size() > 2);
     assert(!addr_);
 
-    switch (static_cast<SaveState>(cmd.dataInt16())) 
+    switch (static_cast<SaveState>(cmd.dataInt16()))
 	{
-        case (SaveState::Addr): 
+        case (SaveState::Addr):
 			{
                 auto it = frame().expr_stack.rbegin() + 2;
                 addr_ = std::move(*it);
@@ -541,7 +548,7 @@ void Decompiler::applySaveAddr(const AsmCommand& cmd)
             }
             break;
 
-        case (SaveState::Index): 
+        case (SaveState::Index):
 			{
                 assert(frame().expr_stack.size() > 3);
                 assert(!index_);
@@ -561,7 +568,7 @@ void Decompiler::applyDuplicate(const AsmCommand& cmd)
     assert(!frame().expr_stack.empty());
     GmAST::ptr_t val = frame().expr_stack.back()->deepcopy();
 
-    if (cmd.dataInt16() || cmd.dataType() == DataType::Int64) 
+    if (cmd.dataInt16() || cmd.dataType() == DataType::Int64)
 	{
         assert(frame().expr_stack.size() > 1);
         frame().expr_stack.push_back((*++frame().expr_stack.rbegin())->deepcopy());
@@ -572,7 +579,7 @@ void Decompiler::applyDuplicate(const AsmCommand& cmd)
 
 bool Decompiler::matchIncrement()
 {
-    if (frame().expr_stack.empty() || frame().stat_list.empty()) 
+    if (frame().expr_stack.empty() || frame().stat_list.empty())
 	{
         return false;
     }
@@ -580,7 +587,7 @@ bool Decompiler::matchIncrement()
     GmAST* asn = frame().stat_list.back().get();
     GmAST* expr = frame().expr_stack.back().get();
     if (asn->pattern() != GmlPattern::Assignment ||
-        asn->rightLeaf()->pattern() != GmlPattern::BinaryOp) 
+        asn->rightLeaf()->pattern() != GmlPattern::BinaryOp)
 	{
         return false;
     }
@@ -590,12 +597,12 @@ bool Decompiler::matchIncrement()
     GmAST* rhs = rvalue->leftLeaf();
 
     if (!(rvalue->dataString() == "+" || rvalue->dataString() == "-") ||
-        !rhs->isNumber(1)) 
+        !rhs->isNumber(1))
 	{
         return false;
     }
 
-    if (rvalue->deepEquals(*expr)) 
+    if (rvalue->deepEquals(*expr))
 	{
         GmAST::ptr_t pref = GmAST::make(GmlPattern::Prefix, rvalue->dataString() + rvalue->dataString());
         pref->addLeaf(asn->leftLeaf()->deepcopy());
@@ -605,7 +612,7 @@ bool Decompiler::matchIncrement()
         return true;
     }
 
-    if (lhs->deepEquals(*expr)) 
+    if (lhs->deepEquals(*expr))
 	{
         GmAST::ptr_t post = GmAST::make(GmlPattern::Postfix, rvalue->dataString() + rvalue->dataString());
         post->addLeaf(expr->deepcopy());
@@ -622,7 +629,7 @@ bool Decompiler::matchSwap()
 {
     GmAST* asn = frame().stat_list.back().get();
     if (asn->pattern() != GmlPattern::Assignment ||
-        asn->leftLeaf()->dataString() != "$$$$temp$$$$") 
+        asn->leftLeaf()->dataString() != "$$$$temp$$$$")
 	{
         return false;
     }
@@ -635,18 +642,18 @@ void Decompiler::applyAssignment(const AsmCommand& cmd)
 {
     GmAST::ptr_t lvalue = nullptr;
     GmAST::ptr_t rvalue = nullptr;
-    if (cmd.dataType() == DataType::Variable) 
+    if (cmd.dataType() == DataType::Variable)
 	{
         lvalue = popVariable(cmd);
         rvalue = pop_back(frame().expr_stack);
-    } 
-	else 
+    }
+	else
 	{
         rvalue = pop_back(frame().expr_stack);
         lvalue = popVariable(cmd);
     }
 
-    GmAST::ptr_t ret = GmAST::make(GmlPattern::Assignment, form_->nameByAddr(cmd.addr));
+    GmAST::ptr_t ret = GmAST::make(GmlPattern::Assignment, cmd.symbol);
     ret->addLeaf(std::move(lvalue));
     ret->addLeaf(std::move(rvalue));
     frame().stat_list.push_back(std::move(ret));
@@ -658,7 +665,7 @@ void Decompiler::applyReturn()
 {
     GmAST::ptr_t var = pop_back(frame().expr_stack);
 
-    if (ret_expr_) 
+    if (ret_expr_)
 	{
         var = std::move(ret_expr_);
     }
@@ -674,39 +681,39 @@ GmAST::ptr_t Decompiler::popVariable(const AsmCommand& cmd)
     GmlPattern pat = var.type == VariableType::Array ? GmlPattern::ArrayElement : GmlPattern::Variable;
 
     GmAST::ptr_t arrIndex = nullptr;
-    if (var.type == VariableType::Array) 
+    if (var.type == VariableType::Array)
 	{
-        if (index_) 
+        if (index_)
 		{
             arrIndex = std::move(index_);
-        } 
-		else 
+        }
+		else
 		{
             arrIndex = pop_back(frame().expr_stack);
         }
     }
 
-    GmAST::ptr_t varTree = GmAST::make(pat, form_->nameByAddr(cmd.addr));
+    GmAST::ptr_t varTree = GmAST::make(pat, cmd.symbol);
     GmAST::ptr_t varScope = GmAST::make(GmlPattern::VarScope, static_cast<int64_t>(var.scope));
 
-    if (arrIndex) 
+    if (arrIndex)
 	{
         varTree->addLeaf(std::move(arrIndex));
     }
 
-    if (var.scope == InstanceType::StackTopOrGlobal) 
+    if (var.scope == InstanceType::StackTopOrGlobal)
 	{
-        if (addr_) 
+        if (addr_)
 		{
             varScope->addLeaf(std::move(addr_));
-        } 
-		else 
+        }
+		else
 		{
             varScope->addLeaf(pop_back(frame().expr_stack));
         }
     }
 
-    if (var.type == VariableType::RoomScope) 
+    if (var.type == VariableType::RoomScope)
 	{
         varScope->dataInt(varScope->dataInt() + 100000);
     }
@@ -723,7 +730,7 @@ Decompiler::Frame& Decompiler::frame()
 void Decompiler::pushFrame(GmAST::ptr_t in)
 {
     stack_.emplace_back();
-    if (in) 
+    if (in)
 	{
         frame().expr_stack.push_back(std::move(in));
     }
@@ -731,8 +738,8 @@ void Decompiler::pushFrame(GmAST::ptr_t in)
 
 void Decompiler::popFrame()
 {
-    assert(!stack_.empty());
-    assert(frame().env_stack.empty());
+    ASSERT(!stack_.empty());
+    ASSERT(frame().env_stack.empty());
 
     reverse(frame().stat_list);
     GmAST::ptr_t t = GmAST::make(GmlPattern::LinearBlock, std::move(frame().stat_list));

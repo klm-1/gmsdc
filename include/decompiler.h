@@ -16,7 +16,7 @@ class ScriptEntry;
 class Decompiler
 {
 public:
-    struct Options 
+    struct Options
 	{
         std::string outputDir;
         std::string gmlSubDir;
@@ -43,7 +43,7 @@ public:
     void decompile(const Options& opt = Options::Release());
 
 private:
-    struct Frame 
+    struct Frame
 	{
         std::vector<size_t> env_stack;
         std::vector<GmAST::ptr_t> expr_stack;
@@ -56,7 +56,7 @@ private:
     GmAST::ptr_t index_;
     GmAST::ptr_t ret_expr_;
 
-    GmAST::ptr_t decompileScript(ScriptEntry& src, const Options& opt);
+    GmAST::ptr_t decompileScript(ScriptEntry const& src, const Options& opt);
     GmAST::ptr_t analyzeControlTree(ControlTree* ct);
     void visit(ControlTree* ct, bool as_block = false, bool push_into = false);
     void decompileBaseBlock(const BaseBlock& bb);

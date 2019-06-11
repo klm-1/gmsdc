@@ -6,8 +6,9 @@
 
 #include "utils.h"
 
+class BinaryReader;
 
-enum class SectionHeader : uint32_t 
+enum class SectionHeader : uint32_t
 {
     Form        = 0x4D524F46, // FORM
     General     = 0x384E4547, // GEN8
@@ -39,13 +40,10 @@ enum class SectionHeader : uint32_t
 
 struct GmHeader
 {
-    uint32_t name;
-    uint32_t size, offset;
+    uint32_t nameCode, size;
+    std::string nameString;
 
-    GmHeader();
-    GmHeader(const byte* raw, int off);
-
-    std::string nameString() const;
+    GmHeader(BinaryReader& br);
 };
 
 #endif // GMHEADER_H

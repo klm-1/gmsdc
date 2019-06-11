@@ -23,7 +23,7 @@ AsmCommand::AsmCommand(const byte* raw, int off)
     , size(4)
     , addr(off)
 {
-    switch (operation()) 
+    switch (operation())
 	{
 
         /* TODO */
@@ -65,11 +65,11 @@ AsmCommand::AsmCommand(const byte* raw, int off)
         case (Operation::PushVar):
         case (Operation::Call):
         case (Operation::Set):
-            if (dataType() != DataType::Int16) 
+            if (dataType() != DataType::Int16)
 			{
                 size += 4;
                 extra[0] = *((uint32_t*)(raw + off) + 1);
-                if (dataType() == DataType::Double || dataType() == DataType::Int64) 
+                if (dataType() == DataType::Double || dataType() == DataType::Int64)
 				{
                     size += 4;
                     extra[1] = *((uint32_t*)(raw + off) + 2);
@@ -83,7 +83,7 @@ AsmCommand::AsmCommand(const byte* raw, int off)
             break;
     }
 
-    if (data >> 16 == SaveStateHigh16) 
+    if (data >> 16 == SaveStateHigh16)
 	{
         data |= static_cast<uint32_t>(Operation::Save) << 24;
     }
@@ -111,7 +111,7 @@ std::vector<AsmCommand> Disassemble(const std::vector<byte>& bc)
 {
     std::vector<AsmCommand> out;
 
-    for (size_t off = 0; off < bc.size();) 
+    for (size_t off = 0; off < bc.size();)
 	{
         AsmCommand current(bc.data(), off);
         out.push_back(current);
@@ -125,7 +125,7 @@ const char* Operation2String(Operation op)
 {
     static char tmp[64];
 
-    switch (op) 
+    switch (op)
 	{
 		CASE_RETURN_SCOPED(Operation, Nop)
 		CASE_RETURN_SCOPED(Operation, Conv)
@@ -169,7 +169,7 @@ const char* Operation2String(Operation op)
 
 std::string Operation2PrettyString(Operation op)
 {
-    switch (op) 
+    switch (op)
 	{
         case (Operation::Add):
         case (Operation::And):
@@ -197,7 +197,7 @@ std::string Operation2PrettyString(Operation op)
         case (Operation::Set):
         case (Operation::Xor):
         case (Operation::Save):
-        case (Operation::Break): 
+        case (Operation::Break):
 			{
                 std::string ret(Operation2String(op));
                 string_lower(ret);
@@ -233,7 +233,7 @@ std::string Operation2PrettyString(Operation op)
 
 const char* Comparison2String(Comparison c)
 {
-    switch (c) 
+    switch (c)
 	{
         case (Comparison::LT):
             return "<";
@@ -253,7 +253,7 @@ const char* Comparison2String(Comparison c)
 
 const char* DataType2String(DataType t)
 {
-    switch (t) 
+    switch (t)
 	{
 		CASE_RETURN_SCOPED(DataType, Double);
 		CASE_RETURN_SCOPED(DataType, Float);
@@ -270,7 +270,7 @@ const char* DataType2String(DataType t)
 
 std::string DataType2PrettyString(DataType t)
 {
-    if (t == DataType::Variable) 
+    if (t == DataType::Variable)
 	{
         return "var";
     }
@@ -283,7 +283,7 @@ std::string DataType2PrettyString(DataType t)
 const char* InstanceType2String(InstanceType t)
 {
     static char tmp[32];
-    switch (t) 
+    switch (t)
 	{
 		CASE_RETURN_SCOPED(InstanceType, StackTopOrGlobal);
 		CASE_RETURN_SCOPED(InstanceType, Self);
@@ -300,14 +300,14 @@ const char* InstanceType2String(InstanceType t)
 
 std::string InstanceType2PrettyString(InstanceType t)
 {
-    switch (t) 
+    switch (t)
 	{
         case (InstanceType::All):
         case (InstanceType::Self):
         case (InstanceType::Other):
         case (InstanceType::Noone):
         case (InstanceType::Global):
-        case (InstanceType::Local): 
+        case (InstanceType::Local):
 			{
                 std::string ret(InstanceType2String(t));
                 string_lower(ret);
@@ -358,7 +358,7 @@ int AsmCommand::dataInt24() const
 {
     int ret = data & 0x00ffffff;
     /* Hack! */
-    if (ret >> 16 == 0x7f) 
+    if (ret >> 16 == 0x7f)
 	{
         ret |= 0xff800000;
     }
@@ -416,7 +416,7 @@ bool OperationIsPush(Operation op)
         op == Operation::PushVar;
 }
 
-std::string AsmCommand::toString() const
+std::string const& AsmCommand::toString() const
 {
     return text;
 }
@@ -428,7 +428,7 @@ void AsmCommand::initText(const GmForm* f)
     std::ostringstream out;
     out << tmp << ": " << Operation2PrettyString(operation()) << " ";
 
-    switch (operation()) 
+    switch (operation())
 	{
         case (Operation::Nop):
             /* Error */
@@ -455,15 +455,7 @@ void AsmCommand::initText(const GmForm* f)
             break;
 
         case (Operation::Set):
-            out << typePair() << " " << InstanceType2PrettyString(variable().scope) << ".";
-            if (f) 
-			{
-                out << f->nameByAddr(addr);
-            } 
-			else 
-			{
-                out << variable().nameIndex;
-            }
+            out << typePair() << " " << InstanceType2PrettyString(variable().scope) << "." << symbol;
             variable().printVarType(out);
             break;
 
@@ -473,7 +465,7 @@ void AsmCommand::initText(const GmForm* f)
         case (Operation::PushGlb):
         case (Operation::PushVar):
             out << DataType2PrettyString(dataType()) << " ";
-            switch (dataType()) 
+            switch (dataType())
 			{
                 case (DataType::Int16):
                     out << dataInt16();
@@ -492,7 +484,7 @@ void AsmCommand::initText(const GmForm* f)
                     break;
 
                 case (DataType::String):
-                    out << '"' << f->strings.get(dataInt32()) << '"';
+                    out << '"' << f->strings().get(dataInt32()) << '"';
                     break;
 
                 case (DataType::Int32):
@@ -502,12 +494,7 @@ void AsmCommand::initText(const GmForm* f)
                     break;
 
                 case (DataType::Variable):
-                    out << InstanceType2PrettyString(variable().scope) << ".";
-                    if (f) {
-                        out << f->nameByAddr(addr);
-                    } else {
-                        out << variable().nameIndex;
-                    }
+                    out << InstanceType2PrettyString(variable().scope) << "." << symbol;
                     variable().printVarType(out);
                     break;
             }
@@ -528,22 +515,14 @@ void AsmCommand::initText(const GmForm* f)
 
         case (Operation::Save):
             out << "addr";
-            if (dataInt16() == static_cast<int16_t>(SaveState::Index)) 
+            if (dataInt16() == static_cast<int16_t>(SaveState::Index))
 			{
                 out << ",index";
             }
             break;
 
         case (Operation::Call):
-            if (f) 
-			{
-                out << f->nameByAddr(addr);
-            } 
-			else 
-			{
-                out << "func_" << dataInt32();
-            }
-            out << "[" << dataInt16() << "]";
+            out << symbol << "[" << dataInt16() << "]";
             break;
 
         case (Operation::Jmp):
@@ -559,7 +538,7 @@ void AsmCommand::initText(const GmForm* f)
 
 void ScopedVariable::printVarType(std::ostream& out) const
 {
-    switch (type) 
+    switch (type)
 	{
         case (VariableType::Array):
             out << "[]";

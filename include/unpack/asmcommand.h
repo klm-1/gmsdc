@@ -133,6 +133,7 @@ struct AsmCommand
     uint32_t extra[2];
     int size, addr;
     std::string text;
+    std::string symbol;
 
     AsmCommand();
     AsmCommand(const byte* raw, int off);
@@ -149,7 +150,7 @@ struct AsmCommand
     float dataFloat() const;
     double dataDouble() const;
     ScopedVariable variable() const;
-    std::string toString() const;
+    std::string const& toString() const;
 
     void initText(const GmForm* f);
 

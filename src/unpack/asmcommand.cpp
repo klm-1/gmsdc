@@ -6,22 +6,23 @@
 
 #include "gmform.h"
 #include "algext.h"
+#include "binaryreader.h"
 
 
 const uint32_t AsmCommand::SaveStateHigh16      = 0x455f;
 
 AsmCommand::AsmCommand()
-    : data(0)
-    , extra{0}
+    : addr(-1)
     , size(0)
-    , addr(-1)
+    , data(0)
+    , extra{0}
 {}
 
-AsmCommand::AsmCommand(const byte* raw, int off)
-    : data(*(uint32_t*)(raw + off))
-    , extra{0}
+AsmCommand::AsmCommand(BinaryReader& br)
+    : addr(br.tell())
     , size(4)
-    , addr(off)
+    , data(br.read<uint32_t>())
+    , extra{0}
 {
     switch (operation())
 	{
@@ -68,11 +69,11 @@ AsmCommand::AsmCommand(const byte* raw, int off)
             if (dataType() != DataType::Int16)
 			{
                 size += 4;
-                extra[0] = *((uint32_t*)(raw + off) + 1);
+                extra[0] = br.read<uint32_t>();
                 if (dataType() == DataType::Double || dataType() == DataType::Int64)
 				{
                     size += 4;
-                    extra[1] = *((uint32_t*)(raw + off) + 2);
+                    extra[1] = br.read<uint32_t>();
                 }
             }
             break;
@@ -107,15 +108,14 @@ DataType TypePair::second() const
     return DataType((pair_ >> 4) & 0x0f);
 }
 
-std::vector<AsmCommand> Disassemble(const std::vector<byte>& bc)
+std::vector<AsmCommand> Disassemble(BinaryReader& br, uint32_t past_the_end)
 {
     std::vector<AsmCommand> out;
 
-    for (size_t off = 0; off < bc.size();)
+    while (br.tell() < past_the_end)
 	{
-        AsmCommand current(bc.data(), off);
+        AsmCommand current(br);
         out.push_back(current);
-        off += current.size;
     }
 
     return std::move(out);
@@ -455,8 +455,20 @@ void AsmCommand::initText(const GmForm* f)
             break;
 
         case (Operation::Set):
-            out << typePair() << " " << InstanceType2PrettyString(variable().scope) << "." << symbol;
-            variable().printVarType(out);
+            {
+                int scope_idx = static_cast<int>(variable().scope);
+                out << typePair() << " ";
+                if (scope_idx >= 0 && variable().type == VariableType::Normal)
+                {
+                    out << "(" << scope_idx << ")";
+                }
+                else
+                {
+                    out << InstanceType2PrettyString(variable().scope);
+                }
+                out << "." << symbol;
+                variable().printVarType(out);
+            }
             break;
 
         case (Operation::PushI16):

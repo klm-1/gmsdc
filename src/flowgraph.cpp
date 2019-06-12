@@ -38,11 +38,11 @@ FlowGraph::FlowGraph(const program_t& p)
     /* Find split points */
     std::vector<int> leaders;
     int last_addr = 0;
-    for (const AsmCommand& cmd : p) 
+    for (const AsmCommand& cmd : p)
 	{
         if (cmd.operation() == Operation::Jmp ||
             cmd.operation() == Operation::JZ ||
-            cmd.operation() == Operation::JNZ) 
+            cmd.operation() == Operation::JNZ)
 		{
             leaders.push_back(cmd.addr + cmd.size);
             leaders.push_back(cmd.jumpAddr());
@@ -60,15 +60,15 @@ FlowGraph::FlowGraph(const program_t& p)
     std::map<int, Node*> addr_map;
 
     /* Create nodes */
-    if (!p.empty() && p.front().addr == *ldr) 
+    if (!p.empty() && p.front().addr == *ldr)
 	{
         ++ldr;
     }
-    for (const AsmCommand& cmd : p) 
+    for (const AsmCommand& cmd : p)
 	{
         currentBB.push_back(cmd);
 
-        if (cmd.addr + cmd.size == *ldr) 
+        if (cmd.addr + cmd.size == *ldr)
 		{
             Node* n = createTerminal(currentBB);
             addr_map[n->addr] = n;
@@ -80,30 +80,30 @@ FlowGraph::FlowGraph(const program_t& p)
     addr_map[last_addr] = nop;
 
     /* Link nodes */
-    for (auto& ptr : nodes_) 
+    for (auto& ptr : nodes_)
 	{
         auto& bb = ptr->tree->baseblock();
 
-        if (bb.valid()) 
+        if (bb.valid())
 		{
-            if (bb.hasJumpIfTrue()) 
+            if (bb.hasJumpIfTrue())
 			{
                 addLink(ptr.get(), addr_map.find(bb.jumpTargetAddr())->second);
                 addLink(ptr.get(), addr_map.find(bb.pastTheEndAddr())->second);
 
-            } 
-			else if (bb.hasJumpIfFalse()) 
+            }
+			else if (bb.hasJumpIfFalse())
 			{
                 addLink(ptr.get(), addr_map.find(bb.pastTheEndAddr())->second);
                 addLink(ptr.get(), addr_map.find(bb.jumpTargetAddr())->second);
 
-            } 
-			else if (bb.hasJumpAlways()) 
+            }
+			else if (bb.hasJumpAlways())
 			{
                 addLink(ptr.get(), addr_map.find(bb.jumpTargetAddr())->second);
 
-            } 
-			else 
+            }
+			else
 			{
                 addLink(ptr.get(), addr_map.find(bb.pastTheEndAddr())->second);
             }
@@ -114,14 +114,14 @@ FlowGraph::FlowGraph(const program_t& p)
 void FlowGraph::cleanupNops()
 {
     std::vector<Node*> to_erase;
-    for (auto& n : nodes_) 
+    for (auto& n : nodes_)
 	{
-        if (n.get() != entry_ && n->isNop() && n->inputsCount() == 0) 
+        if (n.get() != entry_ && n->isNop() && n->inputsCount() == 0)
 		{
             to_erase.push_back(n.get());
         }
     }
-    for (Node* n : to_erase) 
+    for (Node* n : to_erase)
 	{
         eraseNode(n);
     }
@@ -130,30 +130,30 @@ void FlowGraph::cleanupNops()
 void FlowGraph::rerouteBreakContinue()
 {
     std::vector<Node*> loop_headers;
-    for (auto& n : nodes_) 
+    for (auto& n : nodes_)
 	{
-        for (Node* to : n->outputs) 
+        for (Node* to : n->outputs)
 		{
-            if (to->addr <= n->addr) 
+            if (to->addr <= n->addr)
 			{
                 loop_headers.push_back(to);
             }
         }
     }
-    std::sort(loop_headers, [](auto a, auto b) 
+    std::sort(loop_headers, [](auto a, auto b)
 	{
         return a->addr > b->addr;
     });
     loop_headers.erase(std::unique(loop_headers), loop_headers.end());
 
     for (Node* hdr : loop_headers) {
-        Node* bottom = *std::max_element(hdr->inputs, [](auto a, auto b) 
+        Node* bottom = *std::max_element(hdr->inputs, [](auto a, auto b)
 		{
             return a->addr < b->addr;
         });
         Node* pastTheEnd = bottom->outputsCount() == 2 ? bottom->firstOutput() : hdr->lastOutput();
 
-        depthFirstWalk(hdr, [&](Node * node) mutable 
+        depthFirstWalk(hdr, [&](Node * node) mutable
 		{
             if (node == pastTheEnd)
             {
@@ -161,14 +161,14 @@ void FlowGraph::rerouteBreakContinue()
             }
             if (node != hdr && node != bottom)
             {
-                if (removeLink(node, hdr)) 
+                if (removeLink(node, hdr))
 				{
                     Node* to = fallthroughNode(node);
                     Node* ncontinue = mergeNodes(ControlTree::Type::Continue, { createEmptyTerminal() });
                     addLink(node, ncontinue);
                     addLink(ncontinue, to);
                 }
-                if (removeLink(node, pastTheEnd)) 
+                if (removeLink(node, pastTheEnd))
 				{
                     Node* to = fallthroughNode(node);
                     Node* term = createEmptyTerminal();
@@ -185,7 +185,7 @@ void FlowGraph::rerouteBreakContinue()
 void FlowGraph::analyze(const Options& opt)
 {
     /* If empty -> exit */
-    if (nodes_.empty()) 
+    if (nodes_.empty())
 	{
         return;
     }
@@ -203,19 +203,19 @@ void FlowGraph::analyze(const Options& opt)
     analyzeImpl(opt);
 
     /* Assert number of nodes == 1 */
-    if (nodes_.size() > 1) 
+    if (nodes_.size() > 1)
 	{
-        std::clog << "  Failed to simplify graph: " << std::setw(4) << nodes_.size() << " nodes left!\n";
+        std::cout << "  Failed to simplify graph: " << std::setw(4) << nodes_.size() << " nodes left!\n";
     }
 }
 
 void FlowGraph::analyzeImpl(const Options& opt)
 {
-    for (bool changed = true; changed;) 
+    for (bool changed = true; changed;)
 	{
         /* Walk graph in reverse-depth-first order */
         std::vector<Node*> dftree;
-        depthFirstWalk(entry_, [&dftree](Node * node) mutable 
+        depthFirstWalk(entry_, [&dftree](Node * node) mutable
 		{
             dftree.push_back(node);
             return VisitResult::None;
@@ -224,7 +224,7 @@ void FlowGraph::analyzeImpl(const Options& opt)
 
         /* Match patterns */
         changed = false;
-        for (Node* node : dftree) 
+        for (Node* node : dftree)
 		{
             if (matchedBlock(node) ||
                 matchedAnd(node) ||
@@ -234,7 +234,7 @@ void FlowGraph::analyzeImpl(const Options& opt)
                 matchedIfElse(node) ||
                 matchedRepeat(node) ||
                 matchedLoop(node) ||
-                matchedNaturalLoop(node)) 
+                matchedNaturalLoop(node))
 			{
                 logSelf(opt);
                 changed = true;
@@ -328,7 +328,7 @@ bool FlowGraph::matchedBlock(Node* n)
 {
     if (n->outputsCount() != 1 ||
         n->output()->inputsCount() != 1 ||
-        linkIsUp(n, n->output())) 
+        linkIsUp(n, n->output()))
 	{
         return false;
     }
@@ -350,7 +350,7 @@ bool FlowGraph::matchedLoop(Node* n)
     Node* body = n->firstOutput();
     if (body->outputsCount() != 1 ||
         body->output() != n ||
-        body->inputsCount() != 1) 
+        body->inputsCount() != 1)
 	{
         return false;
     }
@@ -362,7 +362,7 @@ bool FlowGraph::matchedLoop(Node* n)
 bool FlowGraph::matchedNaturalLoop(Node* n)
 {
     if (n->outputsCount() != 2 ||
-        n->lastOutput() != n) 
+        n->lastOutput() != n)
 	{
         return false;
     }
@@ -373,7 +373,7 @@ bool FlowGraph::matchedNaturalLoop(Node* n)
 
 bool FlowGraph::matchedRepeat(Node* n)
 {
-    if (n->outputsCount() != 2) 
+    if (n->outputsCount() != 2)
 	{
         return false;
     }
@@ -381,7 +381,7 @@ bool FlowGraph::matchedRepeat(Node* n)
     Node* body = n->lastOutput();
     if (body->outputsCount() != 2 ||
         body->firstOutput() != body ||
-        body->lastOutput() != n->firstOutput()) 
+        body->lastOutput() != n->firstOutput())
 	{
         return false;
     }
@@ -394,7 +394,7 @@ bool FlowGraph::matchedRepeat(Node* n)
 
 bool FlowGraph::matchedIf(Node* n)
 {
-    if (n->outputsCount() != 2) 
+    if (n->outputsCount() != 2)
 	{
         return false;
     }
@@ -404,7 +404,7 @@ bool FlowGraph::matchedIf(Node* n)
         brTrue->isExpression() ||
         brTrue->outputsCount() != 1 ||
         brTrue->inputsCount() != 1 ||
-        brTrue->output() != pastTheEnd) 
+        brTrue->output() != pastTheEnd)
 	{
         return false;
     }
@@ -414,7 +414,7 @@ bool FlowGraph::matchedIf(Node* n)
 
 bool FlowGraph::matchedIfElse(Node* n)
 {
-    if (n->outputsCount() != 2) 
+    if (n->outputsCount() != 2)
 	{
         return false;
     }
@@ -427,7 +427,7 @@ bool FlowGraph::matchedIfElse(Node* n)
         brTrue->inputsCount() != 1 ||
         brFalse->outputsCount() != 1 ||
         brFalse->inputsCount() != 1 ||
-        brTrue->output() != brFalse->output()) 
+        brTrue->output() != brFalse->output())
 	{
         return false;
     }
@@ -437,7 +437,7 @@ bool FlowGraph::matchedIfElse(Node* n)
 
 bool FlowGraph::matchedAnd(Node* n)
 {
-    if (n->outputsCount() != 2) 
+    if (n->outputsCount() != 2)
 	{
         return false;
     }
@@ -449,13 +449,13 @@ bool FlowGraph::matchedAnd(Node* n)
         br_zero->outputsCount() != 1 ||
         br_b->inputsCount() != 1 ||
         br_b->outputsCount() != 1 ||
-        br_zero->output() != br_b->output()) 
+        br_zero->output() != br_b->output())
 	{
         return false;
     }
 
     removeLink(n, br_zero);
-    if (br_zero->inputsCount() == 0) 
+    if (br_zero->inputsCount() == 0)
 	{
         eraseNode(br_zero);
     }
@@ -467,7 +467,7 @@ bool FlowGraph::matchedAnd(Node* n)
 
 bool FlowGraph::matchedOr(Node* n)
 {
-    if (n->outputsCount() != 2) 
+    if (n->outputsCount() != 2)
 	{
         return false;
     }
@@ -479,13 +479,13 @@ bool FlowGraph::matchedOr(Node* n)
         br_one->outputsCount() != 1 ||
         br_b->inputsCount() != 1 ||
         br_b->outputsCount() != 1 ||
-        br_one->output() != br_b->output()) 
+        br_one->output() != br_b->output())
 	{
         return false;
     }
 
     removeLink(n, br_one);
-    if (br_one->inputsCount() == 0) 
+    if (br_one->inputsCount() == 0)
 	{
         eraseNode(br_one);
     }
@@ -498,7 +498,7 @@ bool FlowGraph::matchedOr(Node* n)
 bool FlowGraph::matchedSwitch(Node* n)
 {
     /* 1. Check header */
-    if (!n->isSwitchHeader()) 
+    if (!n->isSwitchHeader())
 	{
         return false;
     }
@@ -506,7 +506,7 @@ bool FlowGraph::matchedSwitch(Node* n)
     /* 2. Find cases */
     std::vector<Node*> checks;
     Node* check = n;
-    for (; check->isSwitchCase(); check = check->lastOutput()) 
+    for (; check->isSwitchCase(); check = check->lastOutput())
 	{
         checks.push_back(check);
     }
@@ -514,7 +514,7 @@ bool FlowGraph::matchedSwitch(Node* n)
     /* 3. Check default case */
     Node* def_check = check;
     if (def_check->outputsCount() != 1 ||
-        def_check->inputsCount() != 1) 
+        def_check->inputsCount() != 1)
 	{
         return false;
     }
@@ -522,20 +522,20 @@ bool FlowGraph::matchedSwitch(Node* n)
     /* 4. Check finalizer */
     Node* def_action = def_check->output();
     Node* finalizer;
-    if (def_action->isSwitchFinalizer()) 
+    if (def_action->isSwitchFinalizer())
 	{
         finalizer = def_action;
         def_action = nullptr;
-    } 
-	else 
+    }
+	else
 	{
-        if (def_action->outputsCount() != 1) 
+        if (def_action->outputsCount() != 1)
 		{
             return false;
         }
         finalizer = def_action->output();
     }
-    if (!finalizer->isSwitchFinalizer()) 
+    if (!finalizer->isSwitchFinalizer())
 	{
         return false;
     }
@@ -543,23 +543,23 @@ bool FlowGraph::matchedSwitch(Node* n)
     /* 5. Find actions */
     std::vector<Node*> actions(checks.size(), nullptr);
     std::vector<char> has_break(checks.size(), 0);
-    for (long i = checks.size() - 1; i >= 0; --i) 
+    for (long i = checks.size() - 1; i >= 0; --i)
 	{
         Node* next_action = i < static_cast<long>(checks.size()) - 1 ? actions[i + 1] : def_action;
         actions[i] = checks[i]->firstOutput();
-        if (actions[i] == finalizer) 
+        if (actions[i] == finalizer)
 		{
             actions[i] = nullptr;
             has_break[i] = !!next_action;
-        } 
-		else if (actions[i] != next_action) 
+        }
+		else if (actions[i] != next_action)
 		{
             has_break[i] = actions[i]->output() == finalizer && next_action;
         }
     }
-    for (long i = 0; i < static_cast<long>(checks.size()) - 1; ++i) 
+    for (long i = 0; i < static_cast<long>(checks.size()) - 1; ++i)
 	{
-        if (actions[i] == actions[i + 1]) 
+        if (actions[i] == actions[i + 1])
 		{
             actions[i] = nullptr;
         }
@@ -568,29 +568,29 @@ bool FlowGraph::matchedSwitch(Node* n)
     /* 6. Merge nodes */
     std::vector<Node*> cases;
     cases.push_back(mergeNodes(ControlTree::Type::SwitchFinalizer, { finalizer }));
-    if (def_action) 
+    if (def_action)
 	{
         cases.push_back(mergeNodes(ControlTree::Type::SwitchDefaultAction, { def_action }));
-        if (def_check != def_action) 
+        if (def_check != def_action)
 		{
             eraseNode(def_check);
         }
-    } 
-	else 
+    }
+	else
 	{
         cases.push_back(mergeNodes(ControlTree::Type::SwitchDefaultEmpty, { def_check }));
     }
-    for (long i = checks.size() - 1; i >= 0; --i) 
+    for (long i = checks.size() - 1; i >= 0; --i)
 	{
-        if (has_break[i]) 
+        if (has_break[i])
 		{
             cases.push_back(mergeNodes(ControlTree::Type::SwitchCaseBreak, { checks[i], actions[i] }));
-        } 
-		else if (actions[i]) 
+        }
+		else if (actions[i])
 		{
             cases.push_back(mergeNodes(ControlTree::Type::SwitchCaseFallthrough, { checks[i], actions[i] }));
-        } 
-		else 
+        }
+		else
 		{
             cases.push_back(mergeNodes(ControlTree::Type::SwitchCaseFallthrough, { checks[i] }));
         }
@@ -602,7 +602,7 @@ bool FlowGraph::matchedSwitch(Node* n)
 
 bool FlowGraph::addLink(Node* a, Node* b)
 {
-    if (!hasLink(a, b)) 
+    if (!hasLink(a, b))
 	{
         a->outputs.push_back(b);
         b->inputs.push_back(a);
@@ -613,11 +613,11 @@ bool FlowGraph::addLink(Node* a, Node* b)
 
 FlowGraph::Node* FlowGraph::fallthroughNode(Node* n)
 {
-    auto it = std::find_if(nodes_, [n](auto & ptr) 
+    auto it = std::find_if(nodes_, [n](auto & ptr)
 	{
         return ptr->addr == n->pastTheEndAddr;
     });
-    if (it == nodes_.end()) 
+    if (it == nodes_.end())
 	{
         return nullptr;
     }
@@ -629,7 +629,7 @@ FlowGraph::Node* FlowGraph::createTerminal(program_t& p)
     BaseBlock bb(p);
     auto ct = std::make_unique<ControlTree>(bb);
     auto pn = std::make_unique<Node>(std::move(ct));
-    if (!entry_) 
+    if (!entry_)
 	{
         entry_ = pn.get();
     }
@@ -641,7 +641,7 @@ FlowGraph::Node* FlowGraph::createEmptyTerminal(int addr)
 {
     nodes_.push_back(std::make_unique<Node>(addr));
     Node* ret = nodes_.back().get();
-    if (!entry_) 
+    if (!entry_)
 	{
         entry_ = ret;
     }
@@ -656,7 +656,7 @@ bool FlowGraph::hasLink(Node* a, Node* b)
 
 bool FlowGraph::linkIsUp(Node* a, Node* b)
 {
-    if (a->addr == -1 || b->addr == -1) 
+    if (a->addr == -1 || b->addr == -1)
 	{
         return false;
     }
@@ -665,7 +665,7 @@ bool FlowGraph::linkIsUp(Node* a, Node* b)
 
 bool FlowGraph::removeLink(Node* a, Node* b)
 {
-    if (!hasLink(a, b)) 
+    if (!hasLink(a, b))
 	{
         return false;
     }
@@ -679,12 +679,12 @@ void replace_with_vector(
     FlowGraph::Node* val,
     std::vector<FlowGraph::Node*>& src)
 {
-    auto it = std::find_if(dest, [val](auto ptr) 
+    auto it = std::find_if(dest, [val](auto ptr)
 	{
         return ptr == val;
     });
 
-    if (it == dest.end()) 
+    if (it == dest.end())
 	{
         return;
     }
@@ -692,9 +692,9 @@ void replace_with_vector(
     size_t pos = std::distance(dest.begin(), it);
     dest.erase(it);
 
-    for (auto* n : src) 
+    for (auto* n : src)
 	{
-        if (std::find_if(dest, [n](auto ptr) { return ptr == n; }) == dest.end()) 
+        if (std::find_if(dest, [n](auto ptr) { return ptr == n; }) == dest.end())
 		{
             dest.insert(dest.begin() + pos++, n);
         }
@@ -703,13 +703,13 @@ void replace_with_vector(
 
 void FlowGraph::eraseNode(Node* n)
 {
-    if (n == entry_) 
+    if (n == entry_)
 	{
         assert(entry_->outputsCount() == 1);
         entry_ = entry_->output();
     }
 
-    auto equals = [n](const std::unique_ptr<Node>& ptr) 
+    auto equals = [n](const std::unique_ptr<Node>& ptr)
 	{
         return ptr.get() == n;
     };
@@ -719,12 +719,12 @@ void FlowGraph::eraseNode(Node* n)
     std::vector<Node*> inputs(n->inputs);
     std::vector<Node*> outputs(n->outputs);
 
-    for (Node* in : inputs) 
+    for (Node* in : inputs)
 	{
         replace_with_vector(in->outputs, n, outputs);
     }
 
-    for (Node* out : outputs) 
+    for (Node* out : outputs)
 	{
         replace_with_vector(out->inputs, n, inputs);
     }
@@ -739,12 +739,12 @@ void FlowGraph::insertBefore(Node* pos, Node* val)
 {
     assert(val->inputsCount() == 0 && val->outputsCount() == 0);
 
-    if (pos == entry_) 
+    if (pos == entry_)
 	{
         entry_ = val;
     }
 
-    for (Node* in : pos->inputs) 
+    for (Node* in : pos->inputs)
 	{
         std::replace(in->outputs, pos, val);
         val->inputs.push_back(in);
@@ -757,7 +757,7 @@ void FlowGraph::insertBefore(Node* pos, Node* val)
 
 void FlowGraph::logSelf(const Options& opt)
 {
-    if (opt.logSteps) 
+    if (opt.logSteps)
 	{
         std::ofstream tmp(opt.stepLogPrefix + std::to_string(step_++) + ".gml");
         GraphmlWriter(tmp).print(*this);

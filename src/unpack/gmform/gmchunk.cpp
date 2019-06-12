@@ -22,7 +22,7 @@ GmChunk::GmChunk(BinaryReader& br, SectionHeader hdr)
     , size(header.size + HEADER_SIZE)
 {
     ASSERT(header.nameCode == static_cast<uint32_t>(hdr));
-    std::clog << header.nameString << " " << size << "\n";
+    std::cout << header.nameString << " " << size << "\n";
 }
 
 
@@ -165,14 +165,6 @@ GmTpagChunk::GmTpagChunk(BinaryReader& br)
 GmCodeChunk::GmCodeChunk(BinaryReader& br)
     : GmListChunk<ScriptEntry>(br, SectionHeader::Code)
 {
-    for (ScriptEntry& scr : content)
-	{
-        for (AsmCommand& cmd : scr.code)
-		{
-            cmd.addr += scr.codeOffset;
-        }
-    }
-
     br.seek(pastTheEndAddr());
 }
 
@@ -384,11 +376,7 @@ ScriptEntry::ScriptEntry(BinaryReader& br)
     codeOffset     = br.tell() + shift - 4;
 
     br.seek(codeOffset);
-    std::vector<byte> bytecode(codeSize);
-    br.read<byte>(bytecode.data(), codeSize);
-
-    /* Disasm */
-    code = Disassemble(bytecode);
+    code = Disassemble(br, codeOffset + codeSize);
 }
 
 std::ostream& operator<< (std::ostream& out, const ScriptEntry& s)

@@ -8,6 +8,7 @@
 
 
 class GmForm;
+class BinaryReader;
 
 enum class DataType
 {
@@ -129,14 +130,14 @@ struct AsmCommand
 {
     static const uint32_t SaveStateHigh16;
 
+    int addr, size;
     uint32_t data;
     uint32_t extra[2];
-    int size, addr;
     std::string text;
     std::string symbol;
 
     AsmCommand();
-    AsmCommand(const byte* raw, int off);
+    AsmCommand(BinaryReader& br);
 
     Operation operation() const;
     Comparison cmpType() const;
@@ -157,7 +158,7 @@ struct AsmCommand
     friend std::ostream& operator<< (std::ostream& out, const AsmCommand& cmd);
 };
 
-std::vector<AsmCommand> Disassemble(const std::vector<byte>& bc);
+std::vector<AsmCommand> Disassemble(BinaryReader& br, uint32_t pte);
 
 bool OperationIsPush(Operation op);
 

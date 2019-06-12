@@ -3,9 +3,9 @@ Build/
 out/
 bin/
 obj/
-log.txt
 Makefile
 .hgignore
 *.layout
 *.depend
 *.win
+*.log

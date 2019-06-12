@@ -111,7 +111,7 @@ void Decompiler::decompile(const Options& opt)
         std::ofstream out(fname);
         if (!out.good())
 		{
-            std::cerr << "Failed to open " << fname << std::endl;
+            std::cout << "Failed to open " << fname << std::endl;
             continue;
         }
 
@@ -701,7 +701,7 @@ GmAST::ptr_t Decompiler::popVariable(const AsmCommand& cmd)
         varTree->addLeaf(std::move(arrIndex));
     }
 
-    if (var.scope == InstanceType::StackTopOrGlobal)
+    if (var.scope == InstanceType::StackTopOrGlobal && var.type != VariableType::Normal)
 	{
         if (addr_)
 		{

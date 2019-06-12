@@ -6,6 +6,7 @@
 
 
 const std::map<std::string, int> BinaryOpPriority{
+    { "^", 0 },
     { "^^", 0 },
     { "||", 0 },
     { "&&", 1 },
@@ -67,7 +68,7 @@ GmAST::GmAST(GmlPattern t, std::vector<ptr_t>&& lv)
     , val_string_()
     , links_(std::move(lv))
 {
-    for (ptr_t& l : links_) 
+    for (ptr_t& l : links_)
 	{
         l->uplink_ = this;
     }
@@ -125,13 +126,13 @@ void GmAST::addLeaf(ptr_t l)
 
 void GmAST::addLeaf(ptr_t l, size_t p)
 {
-    if (!l) 
+    if (!l)
 	{
         links_.insert(links_.begin() + p, std::move(l));
         return;
     }
 
-    if (l->uplink_) 
+    if (l->uplink_)
 	{
         throw std::runtime_error("Node can have at most one uplink");
     }
@@ -147,7 +148,7 @@ const std::string& GmAST::dataString() const
 
 const char* GmlPattern2String(GmlPattern p)
 {
-    switch (p) 
+    switch (p)
 	{
 		CASE_RETURN_SCOPED(GmlPattern, Invalid)
 		CASE_RETURN_SCOPED(GmlPattern, If)
@@ -185,7 +186,7 @@ const char* GmlPattern2String(GmlPattern p)
 
 bool GmlNeedsPadding(GmlPattern p)
 {
-    switch (p) 
+    switch (p)
 	{
         case (GmlPattern::If):
         case (GmlPattern::IfElse):
@@ -237,13 +238,13 @@ double GmAST::dataReal() const
 
 bool GmAST::isNumber() const
 {
-    if (pat_ == GmlPattern::Number) 
+    if (pat_ == GmlPattern::Number)
 	{
         return true;
     }
 
     if (pat_ == GmlPattern::LinearBlock &&
-        links_.size() == 1) 
+        links_.size() == 1)
 	{
         return links_.front()->isNumber();
     }
@@ -253,13 +254,13 @@ bool GmAST::isNumber() const
 
 bool GmAST::isNumber(int x) const
 {
-    if (pat_ == GmlPattern::Number && dataInt() == x) 
+    if (pat_ == GmlPattern::Number && dataInt() == x)
 	{
         return true;
     }
 
     if (pat_ == GmlPattern::LinearBlock &&
-        links_.size() == 1) 
+        links_.size() == 1)
 	{
         return links_.front()->isNumber(x);
     }
@@ -269,12 +270,12 @@ bool GmAST::isNumber(int x) const
 
 bool GmAST::isNop() const
 {
-    if (pat_ == GmlPattern::Nop) 
+    if (pat_ == GmlPattern::Nop)
 	{
         return true;
     }
 
-    if (leavesCount() == 1) 
+    if (leavesCount() == 1)
 	{
         const auto& l = links_.front();
         return l ? l->isNop() : false;
@@ -296,7 +297,7 @@ GmAST::ptr_t GmAST::deepcopy() const
 
     ret->links_.reserve(links_.size());
 
-    for (const ptr_t& l : links_) 
+    for (const ptr_t& l : links_)
 	{
         ret->addLeaf(l->deepcopy());
     }
@@ -323,19 +324,19 @@ void GmAST::dataReal(double x)
 
 bool GmAST::deepEquals(const GmAST& other) const
 {
-    if (*this != other) 
+    if (*this != other)
 	{
         return false;
     }
 
-    if (leavesCount() != other.leavesCount()) 
+    if (leavesCount() != other.leavesCount())
 	{
         return false;
     }
 
-    for (size_t i = 0; i < links_.size(); ++i) 
+    for (size_t i = 0; i < links_.size(); ++i)
 	{
-        if (!links_[i]->deepEquals(*other.links_[i])) 
+        if (!links_[i]->deepEquals(*other.links_[i]))
 		{
             return false;
         }

@@ -333,8 +333,7 @@ bool FlowGraph::matchedBlock(Node* n)
         return false;
     }
     Node* s = n->output();
-    if (s->isSwitchFinalizer() ||
-		(s->outputsCount() == 1 && s->output()->isSwitchFinalizer()))
+    if (s->isSwitchFinalizer())
 	{
         return false;
     }

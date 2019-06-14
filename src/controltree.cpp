@@ -25,9 +25,9 @@ int ControlTree::leavesCount() const
 
 int ControlTree::addr() const
 {
-    if (type_ == Type::Terminal) 
+    if (type_ == Type::Terminal)
 	{
-        if (!bb_.valid()) 
+        if (!bb_.valid())
 		{
             return -1;
         }
@@ -38,9 +38,9 @@ int ControlTree::addr() const
 
 int ControlTree::pastTheEndAddr() const
 {
-    if (type_ == Type::Terminal) 
+    if (type_ == Type::Terminal)
 	{
-        if (!bb_.valid()) 
+        if (!bb_.valid())
 		{
             return -1;
         }
@@ -63,11 +63,11 @@ bool ControlTree::isNumber() const
 
 bool ControlTree::isSwitchHeader() const
 {
-    if (type_ == Type::Terminal) 
+    if (type_ == Type::Terminal)
 	{
         return bb_.endsAsSwitchHeader();
     }
-    if (leaves_.size() > 1) 
+    if (leaves_.size() > 1)
 	{
         return leaves_.back()->isSwitchCase();
     }
@@ -76,11 +76,11 @@ bool ControlTree::isSwitchHeader() const
 
 bool ControlTree::isSwitchCase() const
 {
-    if (type_ == Type::Terminal) 
+    if (type_ == Type::Terminal)
 	{
         return bb_.endsAsSwitchCase();
     }
-    if (leaves_.empty()) 
+    if (leaves_.empty())
 	{
         return false;
     }
@@ -89,9 +89,9 @@ bool ControlTree::isSwitchCase() const
 
 bool ControlTree::isSwitchFinalizer() const
 {
-    if (type_ == Type::Terminal) 
+    if (type_ == Type::Terminal)
 	{
-        return bb_.startsWithPop() && !bb_.endsWithExit();
+        return bb_.startsWithPop();// && !bb_.endsWithExit();
     }
     return leaves_.front()->isSwitchFinalizer();
 }
@@ -134,7 +134,7 @@ ControlTree::Type ControlTree::type() const
 
 const char* ControlTreeTypeToString(ControlTree::Type t)
 {
-    switch (t) 
+    switch (t)
 	{
 		CASE_RETURN_SCOPED(ControlTree::Type, Terminal)
 		CASE_RETURN_SCOPED(ControlTree::Type, LinearBlock)
@@ -162,7 +162,7 @@ std::ostream& operator<< (std::ostream& out, const ControlTree& t)
     static int depth = 0;
 
     std::string pad;
-    for (int i = 0; i < depth; ++i) 
+    for (int i = 0; i < depth; ++i)
 	{
         pad += "    ";
     }
@@ -170,18 +170,18 @@ std::ostream& operator<< (std::ostream& out, const ControlTree& t)
     out << pad << ControlTreeTypeToString(t.type_) << " {" << std::endl;
 
     ++depth;
-    for (const auto& ptr : t.leaves_) 
+    for (const auto& ptr : t.leaves_)
 	{
         out << *ptr << std::endl;
     }
-    if (t.type_ == ControlTree::Type::Terminal) 
+    if (t.type_ == ControlTree::Type::Terminal)
 	{
         std::string pad2(pad);
         pad2 += "    ";
         std::string bs;
         {
             std::ostringstream os;
-            for (auto& cmd : t.bb_) 
+            for (auto& cmd : t.bb_)
 			{
                 os << pad2 << cmd.toString() << std::endl;
             }

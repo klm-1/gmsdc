@@ -11,6 +11,7 @@
 
 class GmForm;
 class ScriptEntry;
+class GmxProject;
 
 
 class Decompiler
@@ -19,18 +20,17 @@ public:
     struct Options
 	{
         std::string outputDir;
-        std::string gmlSubDir;
-        std::string logSubDir;
         std::set<std::string> targets;
         std::set<std::string> ignore;
         bool logFlowgraph;
         bool logTree;
         bool logAssembly;
-        bool eachScriptInSeparateDir;
         bool decompileAll;
 
         static Options Debug();
         static Options Release();
+
+        inline bool logAnything() const { return logAssembly || logFlowgraph || logTree; }
     };
 
     static const std::map<Operation, std::string> AsmOpToBinary;
@@ -38,9 +38,11 @@ public:
     static const std::map<Operation, std::string> AsmOpToRelative;
     static const std::map<Comparison, std::string> ComparisonToOperator;
 
+    Options options = Options::Release();
+
     Decompiler(GmForm& f);
 
-    void decompile(const Options& opt = Options::Release());
+    void decompile(GmxProject& proj);
 
 private:
     struct Frame
@@ -56,7 +58,7 @@ private:
     GmAST::ptr_t index_;
     GmAST::ptr_t ret_expr_;
 
-    GmAST::ptr_t decompileScript(ScriptEntry const& src, const Options& opt);
+    GmAST::ptr_t decompileScript(ScriptEntry const& src);
     GmAST::ptr_t analyzeControlTree(ControlTree* ct);
     void visit(ControlTree* ct, bool as_block = false, bool push_into = false);
     void decompileBaseBlock(const BaseBlock& bb);

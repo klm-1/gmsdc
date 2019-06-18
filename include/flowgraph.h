@@ -19,12 +19,12 @@ class FlowGraph
     using program_t = std::vector<AsmCommand>;
 
 public:
-    enum class VisitResult 
+    enum class VisitResult
 	{
         None, Break, Continue
     };
 
-    struct Options 
+    struct Options
 	{
         std::string stepLogPrefix;
         bool logSteps;
@@ -33,7 +33,7 @@ public:
         static Options Release();
     };
 
-    struct Node 
+    struct Node
 	{
         typedef std::unique_ptr<Node> ptr_t;
 
@@ -59,10 +59,12 @@ public:
         bool isNop() const;
     };
 
+    Options options;
+
     FlowGraph();
     FlowGraph(const program_t& cv);
 
-    void analyze(const Options& opt = Options::Release());
+    void analyze();
     ControlTree* controlTree();
 
     friend class GraphmlWriter;
@@ -72,7 +74,7 @@ private:
     std::vector<Node::ptr_t> nodes_;
 
     int step_;
-    void logSelf(const Options& opt);
+    void logSelf();
 
     bool matchedBlock(Node* n);
     bool matchedLoop(Node* n);
@@ -86,7 +88,7 @@ private:
 
     void cleanupNops();
     void rerouteBreakContinue();
-    void analyzeImpl(const Options& opt);
+    void analyzeImpl();
     void eraseNode(Node* n);
     void insertBefore(Node* pos, Node* val);
     Node* fallthroughNode(Node* n);
@@ -106,7 +108,7 @@ private:
         store.push(entry);
         visited.insert(entry);
 
-        while (!store.empty()) 
+        while (!store.empty())
 		{
             Node* node = store.top();
             store.pop();
@@ -115,9 +117,9 @@ private:
             if (result == VisitResult::Continue) { continue; }
             if (result == VisitResult::Break) { break; }
 
-            for (Node* l : node->outputs) 
+            for (Node* l : node->outputs)
 			{
-                if (visited.insert(l).second) 
+                if (visited.insert(l).second)
 				{
                     store.push(l);
                 }
@@ -137,7 +139,7 @@ private:
     Node* mergeNodes_(ControlTree::Type t, It first, It last)
     {
         auto ct = std::make_unique<ControlTree>(t);
-        for (It it = first; it != last; ++it) 
+        for (It it = first; it != last; ++it)
 		{
             ct->addLeaf(std::move((*it)->tree));
         }
@@ -145,7 +147,7 @@ private:
         auto newHdr = std::make_unique<Node>(std::move(ct));
         insertBefore(*first, newHdr.get());
 
-        for (It it = first; it != last; ++it) 
+        for (It it = first; it != last; ++it)
 		{
             eraseNode(*it);
         }

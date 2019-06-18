@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="-v" />
+				<Option parameters="-f ark22.win" />
 				<Compiler>
 					<Add option="-g" />
 					<Add option="-D__WINNT=1" />
@@ -68,6 +68,7 @@
 		<Unit filename="include/flowgraph.h" />
 		<Unit filename="include/fsmanager.h" />
 		<Unit filename="include/gmast.h" />
+		<Unit filename="include/gmxproject.h" />
 		<Unit filename="include/unpack/asmcommand.h" />
 		<Unit filename="include/unpack/binaryreader.h" />
 		<Unit filename="include/unpack/gmform/16/gmform16.h" />
@@ -86,6 +87,7 @@
 		<Unit filename="src/flowgraph.cpp" />
 		<Unit filename="src/fsmanager.cpp" />
 		<Unit filename="src/gmast.cpp" />
+		<Unit filename="src/gmxproject.cpp" />
 		<Unit filename="src/unpack/asmcommand.cpp" />
 		<Unit filename="src/unpack/binaryreader.cpp" />
 		<Unit filename="src/unpack/gmconstcontext.cpp" />

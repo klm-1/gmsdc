@@ -13,6 +13,7 @@
 #include "graphmlwriter.h"
 #include "gmlwriter.h"
 #include "asttransformer.h"
+#include "gmxproject.h"
 
 const std::map<Operation, std::string> Decompiler::AsmOpToBinary{
     { Operation::Add, "+" },
@@ -55,13 +56,10 @@ const std::map<Comparison, std::string> Decompiler::ComparisonToOperator{
 Decompiler::Options Decompiler::Options::Debug()
 {
     Options ret;
-    ret.outputDir = "out";
-    ret.gmlSubDir = ".";
-    ret.logSubDir = "log";
+    ret.outputDir = "out/log";
     ret.logFlowgraph = true;
     ret.logTree = true;
     ret.logAssembly = true;
-    ret.eachScriptInSeparateDir = true;
     ret.decompileAll = true;
     return ret;
 }
@@ -69,9 +67,7 @@ Decompiler::Options Decompiler::Options::Debug()
 Decompiler::Options Decompiler::Options::Release()
 {
     Options ret;
-    ret.outputDir = "out";
-    ret.gmlSubDir = ".";
-    ret.logSubDir = "log";
+    ret.outputDir = "out/log";
     ret.logFlowgraph = false;
     ret.logTree = false;
     ret.logAssembly = false;
@@ -88,39 +84,29 @@ Decompiler::Decompiler(GmForm& f)
     , ret_expr_(nullptr)
 {}
 
-void Decompiler::decompile(const Options& opt)
+void Decompiler::decompile(GmxProject& proj)
 {
-    std::string gmlsub = opt.outputDir + "/" + opt.gmlSubDir;
-    std::string logsub = opt.outputDir + "/" + opt.logSubDir;
-    FsManager::directoryCreate(std::wstring(opt.outputDir.begin(), opt.outputDir.end()));
-    FsManager::directoryCreate(std::wstring(gmlsub.begin(), gmlsub.end()));
-    FsManager::directoryCreate(std::wstring(logsub.begin(), logsub.end()));
+    if (options.logAnything())
+    {
+        FsManager::directoryCreate(std::wstring(options.outputDir.begin(), options.outputDir.end()));
+    }
 
     for (ScriptEntry const& src : form_->code())
 	{
-        auto tgt_it = opt.targets.find(src.name);
-        auto ign_it = opt.ignore.find(src.name);
-        if ((!opt.decompileAll && tgt_it == opt.targets.end()) || ign_it != opt.ignore.end())
+        auto tgt_it = options.targets.find(src.name);
+        auto ign_it = options.ignore.find(src.name);
+        if ((!options.decompileAll && tgt_it == options.targets.end()) || ign_it != options.ignore.end())
 		{
             std::cout << "Skipped: " << src.name << std::endl;
-            continue;
-        }
-
-        std::string fname = opt.outputDir + "/" + opt.gmlSubDir + "/" + src.name + ".gml";
-
-        std::ofstream out(fname);
-        if (!out.good())
-		{
-            std::cout << "Failed to open " << fname << std::endl;
             continue;
         }
 
         std::cout << "Processing: " << src.name << std::endl;
         try
         {
-            GmAST::ptr_t ptree = decompileScript(src, opt);
+            GmAST::ptr_t ptree = decompileScript(src);
             AstTransformer::transform(ptree);
-            GmlWriter(out, *form_).print(*ptree);
+            proj.addCode(src.name, std::move(ptree));
         }
         catch (std::runtime_error& e)
         {
@@ -129,54 +115,55 @@ void Decompiler::decompile(const Options& opt)
     }
 }
 
-GmAST::ptr_t Decompiler::decompileScript(ScriptEntry const& src, const Options& opt)
+GmAST::ptr_t Decompiler::decompileScript(ScriptEntry const& src)
 {
-    std::string logPrefix = opt.outputDir + "/" + opt.logSubDir + "/" + src.name;
-    if (opt.eachScriptInSeparateDir && (opt.logAssembly || opt.logFlowgraph || opt.logTree))
-	{
-        FsManager::directoryCreate(std::wstring(logPrefix.begin(), logPrefix.end()));
-        logPrefix += "/";
-        logPrefix += src.name;
+    std::string logPrefix = options.outputDir + "/" + src.name + "/";
+
+    if (options.logAnything())
+    {
+        FsManager::directoryCreate(wide(logPrefix));
     }
 
-    if (opt.logAssembly)
+    if (options.logAssembly)
 	{
-        std::ofstream(logPrefix + "_dump.gmasm") << src << std::endl;
-    }
-
-    FlowGraph g(src.code);
-
-    if (opt.logFlowgraph)
-	{
-        std::ofstream tmp(logPrefix + "_raw.gml");
-        GraphmlWriter(tmp).print(g);
+        std::ofstream(logPrefix + "bytecode.gmasm") << src << std::endl;
     }
 
     FlowGraph::Options fgOpt = FlowGraph::Options::Debug();
-    fgOpt.stepLogPrefix = logPrefix + "_fold_step_";
-    fgOpt.logSteps = opt.logFlowgraph;
-    g.analyze(fgOpt);
+    fgOpt.stepLogPrefix = logPrefix + "fold_step_";
+    fgOpt.logSteps = options.logFlowgraph;
 
-    if (opt.logFlowgraph)
+    FlowGraph g(src.code);
+    g.options = fgOpt;
+
+    if (options.logFlowgraph)
 	{
-        std::ofstream tmp(logPrefix + "_format.gml");
+        std::ofstream tmp(logPrefix + "flowgraph.gml");
+        GraphmlWriter(tmp).print(g);
+    }
+
+    g.analyze();
+
+    if (options.logFlowgraph)
+	{
+        std::ofstream tmp(logPrefix + "flowgraph_final.gml");
         GraphmlWriter(tmp).print(g);
     }
 
     ControlTree* ct = g.controlTree();
 
-    if (opt.logTree)
+    if (options.logTree)
 	{
-        std::ofstream tout(logPrefix + "_ctree.gml");
-        GraphmlWriter(tout).print(*ct);
+        std::ofstream tmp(logPrefix + "control_tree.gml");
+        GraphmlWriter(tmp).print(*ct);
     }
 
     GmAST::ptr_t ret = analyzeControlTree(ct);
 
-    if (opt.logTree)
+    if (options.logTree)
 	{
-        std::ofstream tout(logPrefix + "_ast.gml");
-        GraphmlWriter(tout).print(*ret);
+        std::ofstream tmp(logPrefix + "syntax_tree.gml");
+        GraphmlWriter(tmp).print(*ret);
     }
 
     return std::move(ret);

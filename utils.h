@@ -90,13 +90,25 @@ T pop_back(std::vector<T>& v)
     return std::move(tmp);
 }
 
+template<class T, class = decltype(std::to_string(std::declval<T>()))>
+void _throw_key_not_found(T const& v)
+{
+    throw std::runtime_error("Key not found: " + std::to_string(v));
+}
+
+template<class T>
+void _throw_key_not_found(T const&)
+{
+    throw std::runtime_error("Key not found");
+}
+
 template<class K, class V>
 V lookup(const std::map<K, V>& m, const K& k)
 {
     auto it = m.find(k);
     if (it == m.end())
 	{
-        throw std::runtime_error("Key not found");
+        _throw_key_not_found(k);
     }
     return it->second;
 }
@@ -105,6 +117,16 @@ template<class S>
 void string_lower(S& s)
 {
     std::transform(std::begin(s), std::end(s), std::begin(s), ::tolower);
+}
+
+inline std::wstring wide(std::string const& s)
+{
+    return std::wstring(s.begin(), s.end());
+}
+
+inline std::string narrow(std::wstring const& s)
+{
+    return std::string(s.begin(), s.end());
 }
 
 template<class V>

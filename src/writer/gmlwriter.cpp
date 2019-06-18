@@ -512,7 +512,7 @@ void GmlWriter::writeCode(const GmAST& ast, bool ind)
             break;
 
         case (GmlPattern::With):
-            beginLine("with(");
+            beginLine("with (");
             writeExpression(*ast.rightLeaf(), ExprContext::Object);
             endLine(") {");
             writeCode(*ast.leftLeaf());
@@ -527,7 +527,8 @@ void GmlWriter::writeCode(const GmAST& ast, bool ind)
             throw runtime_error(GmlPattern2String(ast.pattern()) + " is not a statement"s);
     }
 
-    if (ind) {
+    if (ind)
+    {
         stepOut();
     }
 }

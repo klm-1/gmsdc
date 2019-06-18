@@ -10,16 +10,19 @@
 #include "fsmanager.h"
 #include "algext.h"
 #include "binaryreader.h"
+#include "gmxproject.h"
 
 
 struct Options
 {
     std::string dataWin = "data.win";
     std::string outputDir = "out";
-    std::string logFile = "log.txt";
+    std::string logSubdir = "_log";
     std::vector<std::string> targets;
     std::vector<std::string> ignore;
     bool verboseLog = false;
+
+    std::string logFullPath() const { return outputDir + "/" + logSubdir; }
 };
 
 
@@ -125,23 +128,29 @@ Options parse_commandline(int argc, char** argv)
 int main(int argc, char** argv)
 {
     Options opt = parse_commandline(argc, argv);
+    std::wstring wout = wide(opt.outputDir);
 
     std::ifstream dump(opt.dataWin, std::ios::binary);
-    FsManager::directoryDelete(std::wstring(opt.outputDir.begin(), opt.outputDir.end()));
+    FsManager::directoryDelete(wout);
+    FsManager::directoryCreate(wout);
 
     std::clog << "Loading " << opt.dataWin << "...\n";
     BinaryReader br(dump);
     auto f = GmForm::Read(br);
 
     Decompiler::Options dcOptn = Decompiler::Options::Debug();
-    dcOptn.outputDir = opt.outputDir;
+    dcOptn.outputDir = opt.logFullPath();
     dcOptn.logFlowgraph = dcOptn.logTree = dcOptn.logAssembly = opt.verboseLog;
     dcOptn.decompileAll = opt.targets.empty();
     std::copy(opt.targets, std::inserter(dcOptn.targets, dcOptn.targets.end()));
     std::copy(opt.ignore, std::inserter(dcOptn.ignore, dcOptn.ignore.end()));
 
     Decompiler dc(*f);
-    dc.decompile(dcOptn);
+    dc.options = dcOptn;
 
-    return 0;
+    GmxProject p;
+    dc.decompile(p);
+
+    p.analyzeContexts();
+    p.exportGmx(*f, opt.outputDir);
 }

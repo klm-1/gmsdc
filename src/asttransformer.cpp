@@ -5,7 +5,7 @@ void AstTransformer::transform(GmAST::ptr_t& ast)
 {
     if (!ast) { return; }
 
-    for (GmAST::ptr_t& l : ast->links_) 
+    for (GmAST::ptr_t& l : ast->links_)
 	{
         transform(l);
     }
@@ -18,25 +18,25 @@ void AstTransformer::transform(GmAST::ptr_t& ast)
 
 void AstTransformer::matchArray2d(GmAST::ptr_t& ast)
 {
-    if (!ast || ast->pattern() != GmlPattern::ArrayElement) 
+    if (!ast || ast->pattern() != GmlPattern::ArrayElement)
 	{
         return;
     }
 
     GmAST* index = ast->leftLeaf();
-    if (index->pattern() != GmlPattern::BinaryOp || index->dataString() != "+") 
+    if (index->pattern() != GmlPattern::BinaryOp || index->dataString() != "+")
 	{
         return;
     }
 
     GmAST* mul = index->rightLeaf();
-    if (mul->pattern() != GmlPattern::BinaryOp || mul->dataString() != "*") 
+    if (mul->pattern() != GmlPattern::BinaryOp || mul->dataString() != "*")
 	{
         return;
     }
 
     GmAST* k32 = mul->leftLeaf();
-    if (!k32->isNumber(32000)) 
+    if (!k32->isNumber(32000))
 	{
         return;
     }
@@ -52,7 +52,7 @@ void AstTransformer::matchArray2d(GmAST::ptr_t& ast)
 
 void AstTransformer::matchCompoundAssignment(GmAST::ptr_t& ast)
 {
-    if (!ast || ast->pattern() != GmlPattern::Assignment) 
+    if (!ast || ast->pattern() != GmlPattern::Assignment)
 	{
         return;
     }
@@ -60,14 +60,14 @@ void AstTransformer::matchCompoundAssignment(GmAST::ptr_t& ast)
     GmAST* lvalue = ast->leftLeaf();
     GmAST* rvalue = ast->rightLeaf();
     if (rvalue->pattern() != GmlPattern::BinaryOp ||
-		rvalue->dataString() == "div") 
+		rvalue->dataString() == "div")
 	{
         return;
     }
 
     GmAST* rhs = rvalue->leftLeaf();
     GmAST* lhs = rvalue->rightLeaf();
-    if (!lhs->deepEquals(*lvalue)) 
+    if (!lhs->deepEquals(*lvalue))
 	{
         return;
     }

@@ -182,7 +182,7 @@ void FlowGraph::rerouteBreakContinue()
     }
 }
 
-void FlowGraph::analyze(const Options& opt)
+void FlowGraph::analyze()
 {
     /* If empty -> exit */
     if (nodes_.empty())
@@ -197,10 +197,10 @@ void FlowGraph::analyze(const Options& opt)
     /* For each loop: detect break/continue */
     rerouteBreakContinue();
 
-    logSelf(opt);
+    logSelf();
 
     /* While changed: try match */
-    analyzeImpl(opt);
+    analyzeImpl();
 
     /* Assert number of nodes == 1 */
     if (nodes_.size() > 1)
@@ -209,7 +209,7 @@ void FlowGraph::analyze(const Options& opt)
     }
 }
 
-void FlowGraph::analyzeImpl(const Options& opt)
+void FlowGraph::analyzeImpl()
 {
     for (bool changed = true; changed;)
 	{
@@ -236,7 +236,7 @@ void FlowGraph::analyzeImpl(const Options& opt)
                 matchedLoop(node) ||
                 matchedNaturalLoop(node))
 			{
-                logSelf(opt);
+                logSelf();
                 changed = true;
                 break;
             }
@@ -754,11 +754,11 @@ void FlowGraph::insertBefore(Node* pos, Node* val)
     addLink(val, pos);
 }
 
-void FlowGraph::logSelf(const Options& opt)
+void FlowGraph::logSelf()
 {
-    if (opt.logSteps)
+    if (options.logSteps)
 	{
-        std::ofstream tmp(opt.stepLogPrefix + std::to_string(step_++) + ".gml");
+        std::ofstream tmp(options.stepLogPrefix + std::to_string(step_++) + ".gml");
         GraphmlWriter(tmp).print(*this);
     }
 }
